@@ -20,7 +20,7 @@ export default function MonGraphique() {
   });
 
   if (!fontsLoaded) {
-    return null; // ou un écran de chargement
+    return null;
   }
 
   const chartConfig = {
