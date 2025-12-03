@@ -12,7 +12,7 @@ const SearchInput = ({ onSearch }: { onSearch?: (text: string) => void }) => {
 
   return (
     <View style={styles.container}>
-      <Search size={20} color="#B2AF57" style={styles.icon} />
+      <Search size={25} color="#B2AF57" style={styles.icon} />
       <TextInput
         style={styles.input}
         placeholder="Search...."
@@ -21,6 +21,7 @@ const SearchInput = ({ onSearch }: { onSearch?: (text: string) => void }) => {
         onChangeText={handleChange}
         autoCapitalize="none"
         autoCorrect={false}
+        
       />
     </View>
   );
@@ -31,9 +32,9 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#1E1E2C",
-    borderRadius: 25,
+    borderRadius: 40,
     paddingHorizontal: 15,
-    paddingVertical: 8,
+    paddingVertical: 17,
   },
   icon: {
     marginRight: 10,

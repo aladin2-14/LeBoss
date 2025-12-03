@@ -1,17 +1,25 @@
-import SearchInput from "@/components/search";
-import Tableinfo from "@/components/tableInfo";
 import TableStatics from "@/components/TableStatics";
-import Entypo from "@expo/vector-icons/Entypo";
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Dimensions, StatusBar, View } from "react-native";
+import * as Animatable from "react-native-animatable";
 import { SafeAreaView } from "react-native-safe-area-context";
+
+const screenWidth = Dimensions.get("window").width;
 
 export default function Index() {
   const handleSearch = (text: string) => {
     console.log("Recherche :", text);
-    // Ici tu peux filtrer des données ou faire une requête
   };
-  const screenWidth = Dimensions.get("window").width;
+  const buttonAR = screenWidth * 0.28;
+  const tableStaticsRef = useRef<any>(null);
+  const tableInfoRef = useRef<any>(null);
+
+  useEffect(() => {
+    tableStaticsRef.current?.fadeInUp(1000).then(() => {
+      tableInfoRef.current?.fadeInUp(1000);
+    });
+  }, []);
+
   return (
     <>
       <StatusBar
@@ -19,60 +27,48 @@ export default function Index() {
         backgroundColor="#0C0C1D"
         translucent={false}
       />
-      <SafeAreaView
-        style={{
-          flex: 1,
-          backgroundColor: "#0C0C1D",
-        }}
-      >
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#0C0C1D" }}>
         <View
           style={{
             marginHorizontal: 19,
             marginTop: 31,
             display: "flex",
             flexDirection: "column",
-            gap: 26,
+            gap: 10,
           }}
         >
-          <View
-            style={{
-              display: "flex",
-              alignItems: "flex-end",
-            }}
+          {/* <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginBottom: 5 }}>
+            <View
+              style={{
+                width: buttonAR,
+                height: 40,
+                backgroundColor: "#DA1B09",
+                borderRadius: 10,
+              }}
+            ></View>
+            <View
+              style={{
+                width: buttonAR,
+                height: 40,
+                backgroundColor: "#41DA09",
+                borderRadius: 10,
+              }}
+            ></View>
+          </View> */}
+          {/* <SearchInput onSearch={handleSearch} /> */}
+          {/* <Quotidien /> */}
+          <Animatable.View
+            ref={tableStaticsRef}
+            style={{ marginTop: 10, alignItems: "center" }}
           >
-            <View>
-              {/* <Plus size={20} /> */}
-              <Entypo name="squared-plus" size={35} color="#EFC817" />
-            </View>
-          </View>
-          <View>
-            <SearchInput onSearch={handleSearch} />
-          </View>
-          <View style={{
-            display: 'flex',
-            flexDirection:'column',
-            gap: 25,
-            marginTop:25
-          }}>
-            <View
-              style={{
-                display: "flex",
-                alignItems: "center",
-              }}
-            >
-              <TableStatics />
-            </View>
-
-            <View
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap:15
-              }}
-            >
-              <Tableinfo />
-            </View>
-          </View>
+            <TableStatics />
+          </Animatable.View>
+          <Animatable.View
+            ref={tableInfoRef}
+            style={{ marginTop: 20, alignItems: "center", opacity: 0 }}
+          >
+            {/* <Tableinfo /> */}
+          </Animatable.View>
         </View>
       </SafeAreaView>
     </>
