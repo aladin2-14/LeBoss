@@ -54,7 +54,8 @@ export default function Index() {
                 borderRadius: 10,
               }}
             ></View>
-          </View> */}
+          </View
+          > */}
           {/* <SearchInput onSearch={handleSearch} /> */}
           {/* <Quotidien /> */}
           <Animatable.View
