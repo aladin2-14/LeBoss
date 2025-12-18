@@ -8,13 +8,13 @@ export type FinancialMonth = {
   
   export const financialData: FinancialMonth[] = [
     { month: "Janvier", revenu: 35, epargne: 0, depense: 0, investissement: 0 },
-    { month: "Février", revenu: 0, epargne: 0, depense: 0, investissement: 0 },
+    { month: "Février", revenu: 10, epargne: 0, depense: 0, investissement: 0 },
     { month: "Mars", revenu: 40, epargne: 10, depense: 45, investissement: 5 },
     { month: "Avril", revenu: 35, epargne: 20, depense: 40, investissement: 5 },
     { month: "Mai", revenu: 0, epargne: 0, depense: 0, investissement: 0 },
     { month: "Juin", revenu: 40, epargne: 10, depense: 45, investissement: 5 },
     { month: "Juillet", revenu: 35, epargne: 20, depense: 40, investissement: 5 },
-    { month: "Août", revenu: 0, epargne: 0, depense: 0, investissement: 0 },
+    { month: "Août", revenu: 70, epargne: 0, depense: 0, investissement: 0 },
     { month: "Septembre", revenu: 40, epargne: 10, depense: 45, investissement: 5 },
     { month: "Octobre", revenu: 35, epargne: 20, depense: 40, investissement: 5 },
     { month: "Novembre", revenu: 0, epargne: 0, depense: 0, investissement: 0 },
