@@ -1,3 +1,4 @@
+import Historique from "@/components/Historique";
 import TableStatics from "@/components/TableStatics";
 import React, { useEffect, useRef } from "react";
 import { Dimensions, StatusBar, View } from "react-native";
@@ -30,11 +31,11 @@ export default function Index() {
       <SafeAreaView style={{ flex: 1, backgroundColor: "#0C0C1D" }}>
         <View
           style={{
-            marginHorizontal: 19,
             marginTop: 31,
             display: "flex",
             flexDirection: "column",
-            gap: 10,
+            justifyContent: "center",
+            alignItems: "center"
           }}
         >
           {/* <View style={{ display: "flex", flexDirection: "row", justifyContent: "space-between", marginBottom: 5 }}>
@@ -70,6 +71,7 @@ export default function Index() {
           >
             {/* <Tableinfo /> */}
           </Animatable.View>
+        <Historique />
         </View>
       </SafeAreaView>
     </>
