@@ -95,8 +95,8 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: "#0C0C1D",
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: "#333",
+    borderWidth: 1.6,
+    borderColor: "#363741",
     overflow: "hidden",
   },
 
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     gap: 2,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: "#333",
+    borderColor: "#363741",
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#0C0C1D",
@@ -124,12 +124,12 @@ const styles = StyleSheet.create({
   },
 
   monthLetter: {
-    color: "#aaa",
+    color: "#f5c400",
     fontWeight: "bold",
   },
 
   monthLetterActive: {
-    color: "#777",
+    color: "#0C0C1D",
   },
 
   content: {

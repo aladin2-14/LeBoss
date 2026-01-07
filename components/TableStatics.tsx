@@ -13,7 +13,7 @@ import {
 import CadeStatistique from "@/components/CadeStatistique";
 import Mettre from "@/components/Mettre";
 import Sortir from "@/components/Sortir";
-import { financialData } from "../data";
+import { getUserFinancialData } from "../data";
 
 const FONT_ASSET = "YourCustomFont-Bold";
 
@@ -21,8 +21,6 @@ const PLOT_AREA_HEIGHT = 60;
 const HORIZONTAL_MARGIN = 12;
 const MONTHS_PER_VIEW = 6;
 const MIN_COLUMN_WIDTH = 64;
-
-const MAX_DATA_VALUE = Math.max(...financialData.map((d) => d.revenu));
 
 const FINANCIAL_ITEMS = [
   { key: "revenu", color: "#6500A8" },
@@ -35,14 +33,19 @@ export default function CustomBarChart() {
   const { width } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
 
+  // 🔥 DONNÉES DE L’UTILISATEUR CONNECTÉ
+  const userData = getUserFinancialData();
+
+  const MAX_DATA_VALUE = Math.max(...userData.map((d) => d.revenu));
+
   const currentMonthIndex = Math.min(
     new Date().getMonth(),
-    financialData.length - 1
+    userData.length - 1
   );
 
   const [activeIndex, setActiveIndex] = useState(currentMonthIndex);
 
-  // 🎬 animation apparition
+  // 🎬 Animations
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -52,8 +55,7 @@ export default function CustomBarChart() {
 
   const chartWidth = width - HORIZONTAL_MARGIN * 2;
   const columnWidth = Math.max(chartWidth / MONTHS_PER_VIEW, MIN_COLUMN_WIDTH);
-
-  const contentWidth = columnWidth * financialData.length;
+  const contentWidth = columnWidth * userData.length;
 
   const animateCade = () => {
     fadeAnim.setValue(0);
@@ -107,14 +109,11 @@ export default function CustomBarChart() {
         contentContainerStyle={{ width: contentWidth }}
       >
         <View style={styles.barsWrapper}>
-          {financialData.map((item, index) => {
+          {userData.map((item, index) => {
             const isActive = index === activeIndex;
 
             return (
-              <View
-                key={item.month}
-                style={[styles.barItem, { width: columnWidth }]}
-              >
+              <View key={`${item.month}-${index}`} style={[styles.barItem, { width: columnWidth }]}>
                 <Pressable
                   onPress={() => handlePress(index)}
                   style={styles.clickableZone}
@@ -152,7 +151,7 @@ export default function CustomBarChart() {
         </View>
       </ScrollView>
 
-      {/* 📊 CadeStatistique animé */}
+      {/* 📊 Stats */}
       <Animated.View
         style={{
           opacity: fadeAnim,
@@ -179,7 +178,7 @@ export default function CustomBarChart() {
 const styles = StyleSheet.create({
   chartContainer: {
     borderRadius: 20,
-    borderWidth: 2,
+    borderWidth: 1.6,
     borderColor: "#363741",
     paddingVertical: 10,
   },

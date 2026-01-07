@@ -25,6 +25,25 @@ export const setCurrentUser = (userId: string) => {
 };
 
 // =====================
+// 📅 MOIS STANDARD
+// =====================
+
+export const MONTHS = [
+  "Janvier",
+  "Février",
+  "Mars",
+  "Avril",
+  "Mai",
+  "Juin",
+  "Juillet",
+  "Août",
+  "Septembre",
+  "Octobre",
+  "Novembre",
+  "Décembre",
+];
+
+// =====================
 // 📊 DONNÉES FINANCIÈRES
 // =====================
 
@@ -37,82 +56,27 @@ export type FinancialMonth = {
   investissement: number;
 };
 
-export const financialData: FinancialMonth[] = [
-  {
-    userId: "u001",
-    month: "Janvier",
-    revenu: 35000000,
-    epargne: 500000,
-    depense: 200000,
-    investissement: 100000,
-  },
-  {
-    userId: "u001",
-    month: "Février",
-    revenu: 40000000,
-    epargne: 100000,
-    depense: 2000000,
-    investissement: 1000000,
-  },
-  {
-    userId: "u001",
-    month: "Mars",
-    revenu: 500000,
-    epargne: 15000,
-    depense: 25000,
-    investissement: 100000,
-  },
+function random(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
-  {
-    userId: "u002",
-    month: "Janvier",
-    revenu: 60,
-    epargne: 20,
-    depense: 30,
-    investissement: 10,
-  },
-  {
-    userId: "u002",
-    month: "Février",
-    revenu: 55,
-    epargne: 15,
-    depense: 25,
-    investissement: 15,
-  },
-  {
-    userId: "u002",
-    month: "Mars",
-    revenu: 65,
-    epargne: 25,
-    depense: 30,
-    investissement: 10,
-  },
+export const financialData: FinancialMonth[] = users.flatMap((user) =>
+  MONTHS.map((month) => {
+    const revenu = random(500_000, 40_000_000);
+    const epargne = random(10_000, revenu * 0.3);
+    const depense = random(10_000, revenu * 0.5);
+    const investissement = random(10_000, revenu * 0.4);
 
-  {
-    userId: "u003",
-    month: "Janvier",
-    revenu: 30,
-    epargne: 5,
-    depense: 15,
-    investissement: 10,
-  },
-  {
-    userId: "u003",
-    month: "Février",
-    revenu: 35,
-    epargne: 10,
-    depense: 15,
-    investissement: 10,
-  },
-  {
-    userId: "u003",
-    month: "Mars",
-    revenu: 40,
-    epargne: 10,
-    depense: 20,
-    investissement: 10,
-  },
-];
+    return {
+      userId: user.id,
+      month,
+      revenu,
+      epargne,
+      depense,
+      investissement,
+    };
+  })
+);
 
 export const getUserFinancialData = (): FinancialMonth[] =>
   financialData.filter((f) => f.userId === currentUser.id);
@@ -129,65 +93,48 @@ export type MonthlyGoal = {
   status: "in-progress" | "achieved" | "failed";
 };
 
-export const monthlyGoals: MonthlyGoal[] = [
+const GOAL_TEMPLATES = [
   {
-    userId: "u001",
-    month: "Janvier",
-    title: "Créer une épargne solide",
-    description: "Mettre de côté au moins 500 000 FBU pour les urgences",
-    status: "achieved",
+    title: "Augmenter mon épargne",
+    description: "Mettre plus d’argent de côté chaque mois",
   },
   {
-    userId: "u001",
-    month: "Janvier",
-    title: "Créer une épargne solide",
-    description: "Mettre de côté au moins 90 000 FBU pour les urgences",
-    status: "achieved",
+    title: "Mieux contrôler mes dépenses",
+    description: "Réduire les dépenses inutiles",
   },
   {
-    userId: "u001",
-    month: "Juin",
-    title: "Créer une épargne solide",
-    description: "Mettre de côté au moins 500 000 FBU pour les urgences",
-    status: "achieved",
+    title: "Investir intelligemment",
+    description: "Placer une partie du revenu dans des investissements",
   },
   {
-    userId: "u001",
-    month: "Decembre",
-    title: "Créer une épargne solide",
-    description: "Mettre de côté au moins 500 000 FBU pour les urgences",
-    status: "achieved",
-  },
-  {
-    userId: "u001",
-    month: "Février",
-    title: "Investir dans mon business",
-    description: "Allouer 1 000 000 FBU pour développer mon activité",
-    status: "in-progress",
-  },
-  {
-    userId: "u001",
-    month: "Mars",
-    title: "Réduire mes dépenses",
-    description: "Ne pas dépasser 25 000 FBU de dépenses inutiles",
-    status: "failed",
-  },
-
-  {
-    userId: "u002",
-    month: "Janvier",
-    title: "Épargner pour voyager",
-    description: "Mettre 20 FBU de côté pour un futur voyage",
-    status: "achieved",
-  },
-  {
-    userId: "u002",
-    month: "Février",
-    title: "Mieux gérer mon budget",
-    description: "Limiter mes dépenses à 25 FBU",
-    status: "in-progress",
+    title: "Préparer un grand projet",
+    description: "Mettre de l’argent de côté pour un projet important",
   },
 ];
+
+const STATUSES: MonthlyGoal["status"][] = [
+  "achieved",
+  "in-progress",
+  "failed",
+];
+
+export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
+  MONTHS.flatMap((month) => {
+    const count = random(1, 3); // 1 à 3 objectifs par mois
+
+    return Array.from({ length: count }).map(() => {
+      const tpl = GOAL_TEMPLATES[random(0, GOAL_TEMPLATES.length - 1)];
+
+      return {
+        userId: user.id,
+        month,
+        title: tpl.title,
+        description: tpl.description,
+        status: STATUSES[random(0, STATUSES.length - 1)],
+      };
+    });
+  })
+);
 
 export const getUserGoals = (): MonthlyGoal[] =>
   monthlyGoals.filter((g) => g.userId === currentUser.id);
