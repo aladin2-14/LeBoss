@@ -1,17 +1,14 @@
 import React, { useEffect, useRef } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
-import {
-  financialDataWithPercent,
-  FinancialMonthWithPercentage,
-} from "../data";
+import { FinancialMonth, getUserFinancialData } from "../data";
 
 type Props = {
   monthIndex: number;
 };
 
 export default function CadeStatistique({ monthIndex }: Props) {
-  const moisData: FinancialMonthWithPercentage =
-    financialDataWithPercent[monthIndex];
+  const data = getUserFinancialData();
+  const moisData: FinancialMonth | undefined = data[monthIndex];
 
   const anim = useRef(new Animated.Value(0)).current;
 
@@ -26,15 +23,24 @@ export default function CadeStatistique({ monthIndex }: Props) {
 
   if (!moisData) return null;
 
+  // 🔢 Calcul dynamique des pourcentages
+  const revenu = moisData.revenu;
+  const depense = moisData.depense;
+  const investissement = moisData.investissement;
+  const epargne = moisData.epargne;
+
+  const safe = revenu === 0 ? 1 : revenu;
+
+  const revenuPercent = 100;
+  const depensePercent = +((depense / safe) * 100).toFixed(1);
+  const investissementPercent = +((investissement / safe) * 100).toFixed(1);
+  const epargnePercent = +((epargne / safe) * 100).toFixed(1);
+
   const categories = [
-    { label: "Revenu", value: moisData.revenuPercent, color: "#4CAF50" },
-    { label: "Épargne", value: moisData.epargnePercent, color: "#2196F3" },
-    { label: "Dépense", value: moisData.depensePercent, color: "#FF5722" },
-    {
-      label: "Investissement",
-      value: moisData.investissementPercent,
-      color: "#FFC107",
-    },
+    { label: "Revenu", value: revenuPercent, color: "#4CAF50" },
+    { label: "Dépense", value: depensePercent, color: "#FF5722" },
+    { label: "Investissement", value: investissementPercent, color: "#FFC107" },
+    { label: "Épargne", value: epargnePercent, color: "#2196F3" },
   ];
 
   return (

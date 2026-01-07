@@ -1,7 +1,7 @@
+import Use from "@/components/Use";
 import React from "react";
-import { StatusBar, Text } from "react-native";
+import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-
 export default function Index() {
   return (
     <>
@@ -18,7 +18,7 @@ export default function Index() {
           alignItems: "center",
         }}
       >
-        <Text style={{ color: "white", fontSize: 24 }}>id</Text>
+        <Use />
       </SafeAreaView>
     </>
   );

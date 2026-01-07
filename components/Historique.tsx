@@ -1,41 +1,91 @@
-import { LucideSearch } from "@/components/Icons/LucideSearch";
-import React from "react";
+import { getUserGoals, MonthlyGoal } from "@/data";
+import React, { useState } from "react";
 import {
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from "react-native";
 
 export default function Historique() {
+  const { width, height } = useWindowDimensions();
+  const goals: MonthlyGoal[] = getUserGoals();
+
+  const [activeMonth, setActiveMonth] = useState<string | null>(null);
+
+  // Récupérer les mois uniques
+  const months = [...new Set(goals.map((g) => g.month))];
+
   return (
-    <View style={styles.container}>
-      {/* ===== HEADER FIXE ===== */}
-      <View style={styles.header}>
-        <TextInput
-          placeholder="Recherche dans l'historique"
-          placeholderTextColor="#777"
-          style={styles.input}
-        />
-        <TouchableOpacity style={styles.button}>
-          {/* <Text style={styles.buttonText}>Filtre</Text> */}
-          <LucideSearch size={22} color="#777" />{" "}
-        </TouchableOpacity>
+    <View
+      style={[styles.container, { width: width * 0.95, height: height * 0.32 }]}
+    >
+      {/* BARRE DES MOIS */}
+      <View style={styles.monthBar}>
+        {months.map((month, index) => {
+          const letter = month.charAt(0).toUpperCase();
+          const isActive = activeMonth === month;
+
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() =>
+                setActiveMonth(isActive ? null : month)
+              }
+              style={[
+                styles.monthItem,
+                isActive && styles.monthItemActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.monthLetter,
+                  isActive && styles.monthLetterActive,
+                ]}
+              >
+                {letter}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
-      {/* ===== CONTENU SCROLLABLE ===== */}
+      {/* HISTORIQUE */}
       <ScrollView
-        style={styles.content}
-        contentContainerStyle={{ paddingBottom: 20 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
       >
-        {Array.from({ length: 20 }).map((_, index) => (
-          <View key={index} style={styles.item}>
-            <Text style={styles.itemText}>Historique {index + 1}</Text>
-          </View>
-        ))}
+        {goals
+          .filter((g) => !activeMonth || g.month === activeMonth)
+          .map((goal, index) => (
+            <View key={index} style={styles.item}>
+              <Text style={styles.month}>{goal.month}</Text>
+              <Text style={styles.title}>{goal.title}</Text>
+              <Text style={styles.desc}>{goal.description}</Text>
+
+              <Text
+                style={[
+                  styles.status,
+                  {
+                    color:
+                      goal.status === "achieved"
+                        ? "#4CAF50"
+                        : goal.status === "in-progress"
+                        ? "#FFC107"
+                        : "#FF5252",
+                  },
+                ]}
+              >
+                {goal.status === "achieved"
+                  ? "Objectif atteint"
+                  : goal.status === "in-progress"
+                  ? "En cours"
+                  : "Non atteint"}
+              </Text>
+            </View>
+          ))}
       </ScrollView>
     </View>
   );
@@ -43,8 +93,6 @@ export default function Historique() {
 
 const styles = StyleSheet.create({
   container: {
-    width: 420,
-    height: 370,
     backgroundColor: "#0C0C1D",
     borderRadius: 20,
     borderWidth: 1,
@@ -52,43 +100,42 @@ const styles = StyleSheet.create({
     overflow: "hidden",
   },
 
-  /* ===== HEADER ===== */
-  header: {
+  monthBar: {
     flexDirection: "row",
+    gap: 2,
     padding: 12,
-    gap: 10,
-    backgroundColor: "#0C0C1D",
-    zIndex: 10,
   },
 
-  input: {
+  monthItem: {
     flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderBottomWidth: 2,
-    borderColor: "#444",
-    backgroundColor: "#0C0C1D",
-    color: "#fff",
-  },
-
-  button: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 14,
-    backgroundColor: "#f5c400",
+    height: 38,
+    gap: 2,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: "#333",
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "#0C0C1D",
   },
 
-  buttonText: {
-    color: "#0C0C1D",
+  monthItemActive: {
+    backgroundColor: "#f5c400",
+    borderColor: "#f5c400",
+  },
+
+  monthLetter: {
+    color: "#aaa",
     fontWeight: "bold",
   },
 
-  /* ===== SCROLLABLE ===== */
+  monthLetterActive: {
+    color: "#777",
+  },
+
   content: {
-    flex: 1,
-    padding: 12,
+    paddingTop: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 6,
   },
 
   item: {
@@ -96,11 +143,31 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     backgroundColor: "#0C0C1D",
     borderRadius: 12,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: "#222",
   },
 
-  itemText: {
+  month: {
+    color: "#aaa",
+    fontSize: 12,
+  },
+
+  title: {
     color: "#fff",
+    fontSize: 15,
+    fontWeight: "bold",
+    marginTop: 4,
+  },
+
+  desc: {
+    color: "#ccc",
+    fontSize: 13,
+    marginTop: 4,
+  },
+
+  status: {
+    marginTop: 8,
+    fontWeight: "bold",
+    fontSize: 12,
   },
 });
