@@ -1,3 +1,4 @@
+import Bhistorique from "@/components/ButtonHistorique";
 import { getUserGoals, MonthlyGoal } from "@/data";
 import React, { useState } from "react";
 import {
@@ -20,7 +21,7 @@ export default function Historique() {
 
   return (
     <View
-      style={[styles.container, { width: width * 0.95, height: height * 0.32 }]}
+      style={[styles.container, { width: width * 0.95, height: height * 0.41 }]}
     >
       {/* BARRE DES MOIS */}
       <View style={styles.monthBar}>
@@ -31,13 +32,8 @@ export default function Historique() {
           return (
             <TouchableOpacity
               key={index}
-              onPress={() =>
-                setActiveMonth(isActive ? null : month)
-              }
-              style={[
-                styles.monthItem,
-                isActive && styles.monthItemActive,
-              ]}
+              onPress={() => setActiveMonth(isActive ? null : month)}
+              style={[styles.monthItem, isActive && styles.monthItemActive]}
             >
               <Text
                 style={[
@@ -57,6 +53,9 @@ export default function Historique() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
+        <View style={styles.historiqueWrapper}>
+          <Bhistorique />
+        </View>
         {goals
           .filter((g) => !activeMonth || g.month === activeMonth)
           .map((goal, index) => (
@@ -99,6 +98,11 @@ const styles = StyleSheet.create({
     borderColor: "#363741",
     overflow: "hidden",
   },
+  historiqueWrapper: {
+    alignItems: "flex-end",
+    paddingHorizontal: 12,
+    marginBottom: 6,
+  },
 
   monthBar: {
     flexDirection: "row",
@@ -133,7 +137,7 @@ const styles = StyleSheet.create({
   },
 
   content: {
-    paddingTop: 10,
+    paddingTop: 5,
     paddingHorizontal: 12,
     paddingBottom: 6,
   },

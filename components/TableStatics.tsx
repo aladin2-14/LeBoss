@@ -17,26 +17,16 @@ import { getUserFinancialData } from "../data";
 
 const FONT_ASSET = "YourCustomFont-Bold";
 
-const PLOT_AREA_HEIGHT = 60;
 const HORIZONTAL_MARGIN = 12;
 const MONTHS_PER_VIEW = 6;
 const MIN_COLUMN_WIDTH = 64;
-
-const FINANCIAL_ITEMS = [
-  { key: "revenu", color: "#6500A8" },
-  { key: "epargne", color: "#848400" },
-  { key: "depense", color: "#A10078" },
-  { key: "investissement", color: "#0F50A6" },
-];
 
 export default function CustomBarChart() {
   const { width } = useWindowDimensions();
   const scrollViewRef = useRef<ScrollView>(null);
 
-  // 🔥 DONNÉES DE L’UTILISATEUR CONNECTÉ
+  // 🔥 Données utilisateur
   const userData = getUserFinancialData();
-
-  const MAX_DATA_VALUE = Math.max(...userData.map((d) => d.revenu));
 
   const currentMonthIndex = Math.min(
     new Date().getMonth(),
@@ -113,34 +103,28 @@ export default function CustomBarChart() {
             const isActive = index === activeIndex;
 
             return (
-              <View key={`${item.month}-${index}`} style={[styles.barItem, { width: columnWidth }]}>
+              <View
+                key={`${item.month}-${index}`}
+                style={[styles.barItem, { width: columnWidth }]}
+              >
                 <Pressable
                   onPress={() => handlePress(index)}
                   style={styles.clickableZone}
                 >
-                  {/* BAR */}
+                  {/* 🔘 POINT */}
                   <View
-                    style={[styles.stackedBar, isActive && styles.activeBar]}
-                  >
-                    {FINANCIAL_ITEMS.map((type) => {
-                      const height =
-                        (item[type.key] / MAX_DATA_VALUE) * PLOT_AREA_HEIGHT;
+                    style={[
+                      styles.monthDot,
+                      isActive && styles.activeDot,
+                    ]}
+                  />
 
-                      return (
-                        <View
-                          key={type.key}
-                          style={{
-                            height,
-                            backgroundColor: type.color,
-                          }}
-                        />
-                      );
-                    })}
-                  </View>
-
-                  {/* MOIS */}
+                  {/* 🗓️ MOIS */}
                   <Text
-                    style={[styles.monthLabel, isActive && styles.activeMonth]}
+                    style={[
+                      styles.monthLabel,
+                      isActive && styles.activeMonth,
+                    ]}
                   >
                     {item.month}
                   </Text>
@@ -163,7 +147,7 @@ export default function CustomBarChart() {
           style={{
             flexDirection: "row",
             justifyContent: "space-between",
-            marginHorizontal: 70,
+            marginHorizontal: 30,
             marginTop: 14,
           }}
         >
@@ -180,7 +164,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.6,
     borderColor: "#363741",
-    paddingVertical: 10,
+    paddingVertical: 14,
   },
 
   loadingContainer: {
@@ -191,8 +175,8 @@ const styles = StyleSheet.create({
 
   barsWrapper: {
     flexDirection: "row",
-    alignItems: "flex-end",
-    height: 180,
+    alignItems: "center",
+    height: 70,
   },
 
   barItem: {
@@ -203,27 +187,26 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
 
-  stackedBar: {
-    width: "60%",
-    borderRadius: 20,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-    opacity: 0.6,
+  monthDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: "#555",
+    marginBottom: 8,
   },
 
-  activeBar: {
-    opacity: 1,
-    transform: [{ scaleY: 1.05 }],
+  activeDot: {
+    backgroundColor: "#FFD700",
+    transform: [{ scale: 1.6 }],
   },
 
   monthLabel: {
     color: "#AAA",
     fontSize: 12,
-    marginTop: 6,
   },
 
   activeMonth: {
-    color: "#FFF",
+    color: "#FFD700",
     fontWeight: "700",
   },
 });

@@ -31,7 +31,7 @@ export default function Index() {
       <SafeAreaView style={{ flex: 1, backgroundColor: "#0C0C1D" }}>
         <View
           style={{
-            marginTop: 31,
+            marginTop: 15,
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
@@ -61,7 +61,7 @@ export default function Index() {
           {/* <Quotidien /> */}
           <Animatable.View
             ref={tableStaticsRef}
-            style={{ marginTop: 10, alignItems: "center" }}
+            style={{ marginTop: 6, alignItems: "center" }}
           >
             <TableStatics />
           </Animatable.View>

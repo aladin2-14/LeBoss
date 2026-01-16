@@ -1,21 +1,13 @@
 // =====================
 // 👤 UTILISATEURS
 // =====================
-
-export type User = {
-  id: string;
-  name: string;
-};
+export type User = { id: string; name: string };
 
 export const users: User[] = [
   { id: "u001", name: "NIYONKIZA Jean Michel" },
   { id: "u002", name: "Aline Mukamana" },
   { id: "u003", name: "Eric Ndayishimiye" },
 ];
-
-// =====================
-// 🔐 UTILISATEUR CONNECTÉ
-// =====================
 
 export let currentUser: User = users[0];
 
@@ -27,7 +19,6 @@ export const setCurrentUser = (userId: string) => {
 // =====================
 // 📅 MOIS STANDARD
 // =====================
-
 export const MONTHS = [
   "Janvier",
   "Février",
@@ -46,7 +37,6 @@ export const MONTHS = [
 // =====================
 // 📊 DONNÉES FINANCIÈRES
 // =====================
-
 export type FinancialMonth = {
   userId: string;
   month: string;
@@ -54,6 +44,7 @@ export type FinancialMonth = {
   epargne: number;
   depense: number;
   investissement: number;
+  credit: number;
 };
 
 function random(min: number, max: number) {
@@ -66,6 +57,7 @@ export const financialData: FinancialMonth[] = users.flatMap((user) =>
     const epargne = random(10_000, revenu * 0.3);
     const depense = random(10_000, revenu * 0.5);
     const investissement = random(10_000, revenu * 0.4);
+    const credit = random(5_000, revenu * 0.2);
 
     return {
       userId: user.id,
@@ -74,6 +66,7 @@ export const financialData: FinancialMonth[] = users.flatMap((user) =>
       epargne,
       depense,
       investissement,
+      credit,
     };
   })
 );
@@ -84,7 +77,6 @@ export const getUserFinancialData = (): FinancialMonth[] =>
 // =====================
 // 🎯 OBJECTIFS MENSUELS
 // =====================
-
 export type MonthlyGoal = {
   userId: string;
   month: string;
@@ -112,19 +104,13 @@ const GOAL_TEMPLATES = [
   },
 ];
 
-const STATUSES: MonthlyGoal["status"][] = [
-  "achieved",
-  "in-progress",
-  "failed",
-];
+const STATUSES: MonthlyGoal["status"][] = ["achieved", "in-progress", "failed"];
 
 export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
   MONTHS.flatMap((month) => {
-    const count = random(1, 3); // 1 à 3 objectifs par mois
-
+    const count = random(1, 3);
     return Array.from({ length: count }).map(() => {
       const tpl = GOAL_TEMPLATES[random(0, GOAL_TEMPLATES.length - 1)];
-
       return {
         userId: user.id,
         month,
@@ -138,3 +124,63 @@ export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
 
 export const getUserGoals = (): MonthlyGoal[] =>
   monthlyGoals.filter((g) => g.userId === currentUser.id);
+
+// =====================
+// 💸 SORTIR DE L’ARGENT (ModalS)
+// =====================
+export const sortirArgent = (monthIndex: number, montant: number) => {
+  const data = getUserFinancialData();
+  const month = data[monthIndex];
+  if (!month) return;
+
+  const totalDepenses =
+    month.depense + month.epargne + month.investissement + month.credit;
+  if (montant > month.revenu - totalDepenses) {
+    console.warn("💸 Fonds insuffisants !");
+    return;
+  }
+
+  month.revenu -= montant;
+
+  console.log(`📊 Mois : ${month.month}`);
+  console.log(`Revenu restant : ${month.revenu} FBU`);
+  console.log(`Dépense : ${month.depense} FBU`);
+  console.log(`Épargne : ${month.epargne} FBU`);
+  console.log(`Investissement : ${month.investissement} FBU`);
+  console.log(`Crédit : ${month.credit} FBU`);
+};
+
+// =====================
+// 💰 AJOUTER/RECUPERER ARGENT (ModalM)
+// =====================
+export const recupererArgent = (
+  monthIndex: number,
+  montant: number,
+  depensePct: number,
+  investissementPct: number,
+  epargnePct: number
+) => {
+  const data = getUserFinancialData();
+  const month = data[monthIndex];
+  if (!month) return;
+
+  month.revenu += montant;
+
+  // Calcul automatique du pourcentage de revenu restant
+  const revenuPct = 100 - (depensePct + investissementPct + epargnePct);
+
+  month.depense = Math.round((month.revenu * depensePct) / 100);
+  month.epargne = Math.round((month.revenu * epargnePct) / 100);
+  month.investissement = Math.round((month.revenu * investissementPct) / 100);
+  month.credit =
+    month.revenu - (month.depense + month.epargne + month.investissement);
+
+  console.log(`📊 Mois : ${month.month}`);
+  console.log(`Revenu : ${month.revenu} FBU`);
+  console.log(`Dépense : ${month.depense} FBU (${depensePct}%)`);
+  console.log(`Épargne : ${month.epargne} FBU (${epargnePct}%)`);
+  console.log(
+    `Investissement : ${month.investissement} FBU (${investissementPct}%)`
+  );
+  console.log(`Crédit : ${month.credit} FBU`);
+};
