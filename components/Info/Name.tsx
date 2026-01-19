@@ -51,19 +51,19 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#000",
+    backgroundColor: "#0C0C1D",
     // padding: 10,
     paddingTop: 10,
     paddingBottom: 10,
     paddingHorizontal: 10,
     borderRadius: 30,
     borderWidth: 2,
-    borderColor: "#222",
+    borderColor: "#363741",
     gap: 10,
   },
   avatar: {
-    width: 120,
-    height: 120,
+    width: 150,
+    height: 150,
     borderRadius: 80,
     backgroundColor: "#1E90FF",
     justifyContent: "center",
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     color: "white",
-    fontSize: 32,
+    fontSize: 42,
     fontWeight: "bold",
   },
   info: {
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   name: {
     color: "white",
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: "bold",
   },
   stats: {
@@ -96,11 +96,11 @@ const styles = StyleSheet.create({
   },
   label: {
     color: "#aaa",
-    fontSize: 12,
+    fontSize: 14,
   },
   value: {
     color: "white",
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: "bold",
     marginTop: 4,
   },

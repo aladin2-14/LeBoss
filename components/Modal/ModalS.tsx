@@ -30,7 +30,7 @@ export default function ModalS({
     const montantNum = parseFloat(montant);
 
     // Vérification si montant valide
-    if ( montantNum > solde) {
+    if (isNaN(montantNum) || montantNum <= 0 || montantNum > solde) {
       // 🔹 Toast déclenché si le montant est invalide ou si le montant > solde
       Toast.show({
         type: "error",

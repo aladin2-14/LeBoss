@@ -7,6 +7,7 @@ import { Colors } from "@/constants/theme";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { ChartSpline, CircleUser, House, Target } from "lucide-react-native";
 
+import { toastConfig } from "@/components/toastUi/toastConfig";
 import Toast from "react-native-toast-message"; // <-- import du toast
 
 export default function TabLayout() {
@@ -61,7 +62,7 @@ export default function TabLayout() {
       </Tabs>
 
       {/* Toast global */}
-      <Toast />
+      <Toast config={toastConfig} />
     </>
   );
 }

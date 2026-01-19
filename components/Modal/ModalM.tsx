@@ -39,9 +39,9 @@ export default function ModalM({
 }: Props) {
   const [montant, setMontant] = useState("");
   const [open, setOpen] = useState(false);
-  const [depense, setDepense] = useState("20");
-  const [investissement, setInvestissement] = useState("20");
-  const [epargne, setEpargne] = useState("10");
+  const [depense, setDepense] = useState("0");
+  const [investissement, setInvestissement] = useState("0");
+  const [epargne, setEpargne] = useState("0");
 
   const toggle = () => {
     LayoutAnimation.easeInEaseOut();
@@ -76,7 +76,7 @@ export default function ModalM({
         text1: message,
         position: "bottom",
         visibilityTime: 2500,
-        bottomOffset: 50,
+        bottomOffset: 60,
       });
 
       setMontant("");
@@ -106,7 +106,7 @@ export default function ModalM({
             <Ionicons
               name={open ? "chevron-up" : "chevron-down"}
               size={22}
-              color="#333"
+              color="#AAA"
             />
           </Pressable>
 
