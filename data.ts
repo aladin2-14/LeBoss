@@ -116,10 +116,10 @@ export const financialData: FinancialMonth[] = users.flatMap((user) =>
 // 💸 DÉPENSES PAR CATÉGORIE
 // =====================
 export const depenses: Depense[] = [
-  { categorie: "Nourriture", montant: 100000, color: "#3B82F6" },
+  { categorie: "Nourriture", montant: 90000, color: "#3B82F6" },
   { categorie: "Déplacement", montant: 40000, color: "#FACC15" },
   { categorie: "Maison", montant: 100000, color: "#A855F7" },
-  { categorie: "Projets", montant: 5000, color: "#22C55E" },
+  { categorie: "Projets", montant: 50000, color: "#22C55E" },
 ];
 
 // =====================
