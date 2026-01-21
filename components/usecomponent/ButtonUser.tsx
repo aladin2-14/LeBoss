@@ -1,13 +1,13 @@
 import { MaterialIcons } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
-    LayoutAnimation,
-    Platform,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    UIManager,
-    View,
+  LayoutAnimation,
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  UIManager,
+  View,
 } from "react-native";
 
 // 👉 Active animation Android
@@ -21,6 +21,11 @@ if (
 export default function WalletTabs() {
   const [activeTab, setActiveTab] = useState<"history" | "wallet">("history");
   const [openAction, setOpenAction] = useState<number | null>(null);
+  const actions = [
+    { label: "Budget", color: "#101C36", showInWallet: false },
+    { label: "Dépense", color: "#462620", showInWallet: true },
+    { label: "Crédit ou Dette", color: "#1E193A", showInWallet: true },
+  ];
 
   const toggleAction = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -61,26 +66,31 @@ export default function WalletTabs() {
       </View>
 
       {/* ================= CONTENT ================= */}
-      <View style={styles.content}>
+      {/* <View style={styles.content}>
         {activeTab === "history" ? (
           <Text style={styles.contentText}>📜 Contenu Historique</Text>
         ) : (
           <Text style={styles.contentText}>💰 Contenu Porte-monnaie</Text>
         )}
-      </View>
+      </View> */}
 
       {/* ================= ACTIONS (ACCORDION) ================= */}
-      {["Modifier mon budget", "Dépense par catégorie", "Statistiques"].map(
-        (label, index) => {
+      {/* ================= ACTIONS (ACCORDION) ================= */}
+      {actions
+        .filter((item) => activeTab === "history" || item.showInWallet)
+        .map((item, index) => {
           const isOpen = openAction === index;
 
           return (
-            <View key={index} style={styles.actionBox}>
+            <View
+              key={index}
+              style={[styles.actionBox, { backgroundColor: item.color }]}
+            >
               <TouchableOpacity
                 style={styles.actionHeader}
                 onPress={() => toggleAction(index)}
               >
-                <Text style={styles.actionText}>{label}</Text>
+                <Text style={styles.actionText}>{item.label}</Text>
 
                 <MaterialIcons
                   name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
@@ -92,14 +102,13 @@ export default function WalletTabs() {
               {isOpen && (
                 <View style={styles.actionContent}>
                   <Text style={styles.actionContentText}>
-                    Contenu de {label}
+                    Contenu de {item.label}
                   </Text>
                 </View>
               )}
             </View>
           );
-        }
-      )}
+        })}
     </View>
   );
 }
@@ -107,7 +116,15 @@ export default function WalletTabs() {
 // ================= STYLES =================
 const styles = StyleSheet.create({
   container: {
-    padding: 20,
+    // padding: 20,
+    borderWidth: 2,
+    borderColor: "#363741",
+    paddingTop: 10,
+    paddingBottom: 10,
+    paddingHorizontal: 15,
+    marginHorizontal: 12,
+    marginTop: 20,
+    borderRadius: 20,
   },
 
   // Tabs
@@ -126,7 +143,8 @@ const styles = StyleSheet.create({
   },
 
   tabActive: {
-    backgroundColor: "#1E4ED8",
+    backgroundColor: "#FFD700",
+    color: "#0C0C1D",
   },
 
   tabText: {
@@ -135,7 +153,7 @@ const styles = StyleSheet.create({
   },
 
   tabActiveText: {
-    color: "#FFFFFF",
+    color: "#0C0C1D",
     fontWeight: "700",
   },
 
@@ -155,7 +173,6 @@ const styles = StyleSheet.create({
   // Actions
   actionBox: {
     marginTop: 14,
-    backgroundColor: "#0C0C1D",
     borderRadius: 14,
     overflow: "hidden",
   },

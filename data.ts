@@ -24,6 +24,12 @@ export type MonthlyGoal = {
   status: "in-progress" | "achieved" | "failed";
 };
 
+export type Depense = {
+  categorie: string;
+  montant: number;
+  color: string;
+};
+
 // =====================
 // 📅 CONSTANTES
 // =====================
@@ -61,11 +67,7 @@ const GOAL_TEMPLATES = [
   },
 ];
 
-const STATUSES: MonthlyGoal["status"][] = [
-  "achieved",
-  "in-progress",
-  "failed",
-];
+const STATUSES: MonthlyGoal["status"][] = ["achieved", "in-progress", "failed"];
 
 // =====================
 // 👤 UTILISATEURS
@@ -87,7 +89,7 @@ export const setCurrentUser = (userId: string) => {
 };
 
 // =====================
-// 🛠️ HELPERS INTERNES
+// 🛠️ HELPERS
 // =====================
 function random(min: number, max: number) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -101,7 +103,7 @@ export const financialData: FinancialMonth[] = users.flatMap((user) =>
     return {
       userId: user.id,
       month,
-      revenu: 0,           // 👈 aucun argent au départ
+      revenu: 0, // 👈 aucun argent au départ
       epargne: 0,
       depense: 0,
       investissement: 0,
@@ -109,6 +111,16 @@ export const financialData: FinancialMonth[] = users.flatMap((user) =>
     };
   })
 );
+
+// =====================
+// 💸 DÉPENSES PAR CATÉGORIE
+// =====================
+export const depenses: Depense[] = [
+  { categorie: "Nourriture", montant: 100000, color: "#3B82F6" },
+  { categorie: "Déplacement", montant: 40000, color: "#FACC15" },
+  { categorie: "Maison", montant: 100000, color: "#A855F7" },
+  { categorie: "Projets", montant: 5000, color: "#22C55E" },
+];
 
 // =====================
 // 🎯 OBJECTIFS MENSUELS
@@ -138,7 +150,6 @@ export const getUserFinancialData = (): FinancialMonth[] =>
 export const getUserGoals = (): MonthlyGoal[] =>
   monthlyGoals.filter((g) => g.userId === currentUser.id);
 
-// 💰 TOTAL ARGENT ENTRÉ (tous les mois)
 export const getTotalIncome = (): number =>
   getUserFinancialData()
     .filter((m) => m.revenu > 0)
@@ -185,6 +196,5 @@ export const recupererArgent = (
     (month.revenu * investissementPct) / 100
   );
   month.credit =
-    month.revenu -
-    (month.depense + month.epargne + month.investissement);
+    month.revenu - (month.depense + month.epargne + month.investissement);
 };

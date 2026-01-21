@@ -1,8 +1,8 @@
 import Button from "@/components/usecomponent/ButtonUser";
 import Profile from "@/components/usecomponent/Profile";
+import Static from "@/components/usecomponent/StatisticUse";
 import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, View } from "react-native";
-
 export default function Info() {
   const [screenSize, setScreenSize] = useState({
     width: Dimensions.get("window").width,
@@ -27,6 +27,7 @@ export default function Info() {
     <View style={styles.root}>
       <Profile />
       <Button />
+      < Static/>
     </View>
   );
 }
