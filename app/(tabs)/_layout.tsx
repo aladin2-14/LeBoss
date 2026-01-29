@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import React, { useEffect, useRef } from "react";
-import { Animated, Dimensions, Platform, StyleSheet, View } from "react-native";
+import { Animated, Dimensions, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { HapticTab } from "@/components/haptic-tab";
@@ -54,7 +54,7 @@ export default function TabLayout() {
           strokeWidth={focused ? 2.6 : 2}
         />
 
-        {focused && <View style={styles.activeDot} />}
+        {focused}
       </Animated.View>
     );
   };
