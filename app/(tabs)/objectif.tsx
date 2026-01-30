@@ -1,4 +1,4 @@
-import Calender from "@/components/calender/Calender";
+import MonoCalender from "@/components/calender/MonoCalender";
 import React from "react";
 import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,7 +18,8 @@ export default function Index() {
           alignItems: "center",
         }}
       >
-        <Calender/>
+        <MonoCalender />
+        {/* <Calender/> */}
       </SafeAreaView>
     </>
   );
