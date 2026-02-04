@@ -1,7 +1,9 @@
 import MonoCalender from "@/components/calender/MonoCalender";
+import Raison from "@/components/Raisonnement/Raisonnement";
 import React from "react";
 import { StatusBar } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+
 export default function Index() {
   return (
     <>
@@ -20,7 +22,7 @@ export default function Index() {
         }}
       >
         <MonoCalender />
-        {/* <Calender/> */}
+        <Raison />
       </SafeAreaView>
     </>
   );
