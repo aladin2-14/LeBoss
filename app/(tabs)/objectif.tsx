@@ -18,7 +18,8 @@ export default function Index() {
           backgroundColor: "#0C0C1D",
           // justifyContent: "center",
           alignItems: "center",
-          marginTop: 20,
+          marginTop: 30,
+          gap:10,
         }}
       >
         <MonoCalender />
