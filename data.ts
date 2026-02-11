@@ -1,11 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
 // =====================
 // 🧩 TYPES
 // =====================
-export type User = {
-  id: string;
-  name: string;
-};
-
+export type User = { id: string; name: string };
 export type FinancialMonth = {
   userId: string;
   month: string;
@@ -15,7 +13,6 @@ export type FinancialMonth = {
   investissement: number;
   credit: number;
 };
-
 export type MonthlyGoal = {
   userId: string;
   month: string;
@@ -23,12 +20,7 @@ export type MonthlyGoal = {
   description: string;
   status: "in-progress" | "achieved" | "failed";
 };
-
-export type Depense = {
-  categorie: string;
-  montant: number;
-  color: string;
-};
+export type Depense = { categorie: string; montant: number; color: string };
 
 // =====================
 // 📅 CONSTANTES
@@ -79,10 +71,9 @@ export const users: User[] = [
 ];
 
 // =====================
-// 👤 UTILISATEUR COURANT (STATE GLOBAL SIMPLE)
+// 👤 UTILISATEUR COURANT
 // =====================
 export let currentUser: User = users[0];
-
 export const setCurrentUser = (userId: string) => {
   const user = users.find((u) => u.id === userId);
   if (user) currentUser = user;
@@ -96,24 +87,22 @@ function random(min: number, max: number) {
 }
 
 // =====================
-// 📊 DONNÉES FINANCIÈRES (tous les mois à 0 FBU)
+// 📊 STORE FINANCIER
 // =====================
 export const financialData: FinancialMonth[] = users.flatMap((user) =>
-  MONTHS.map((month) => {
-    return {
-      userId: user.id,
-      month,
-      revenu: 0, // 👈 aucun argent au départ
-      epargne: 0,
-      depense: 0,
-      investissement: 0,
-      credit: 0,
-    };
-  })
+  MONTHS.map((month) => ({
+    userId: user.id,
+    month,
+    revenu: 0,
+    depense: 0,
+    epargne: 0,
+    investissement: 0,
+    credit: 0,
+  }))
 );
 
 // =====================
-// 💸 DÉPENSES PAR CATÉGORIE
+// 💸 DEPENSES ET OBJECTIFS
 // =====================
 export const depenses: Depense[] = [
   { categorie: "Nourriture", montant: 90000, color: "#3B82F6" },
@@ -122,9 +111,6 @@ export const depenses: Depense[] = [
   { categorie: "Projets", montant: 50000, color: "#22C55E" },
 ];
 
-// =====================
-// 🎯 OBJECTIFS MENSUELS
-// =====================
 export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
   MONTHS.flatMap((month) => {
     const count = random(1, 3);
@@ -142,7 +128,7 @@ export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
 );
 
 // =====================
-// 🔍 SELECTEURS (GETTERS)
+// 🔍 GETTERS
 // =====================
 export const getUserFinancialData = (): FinancialMonth[] =>
   financialData.filter((f) => f.userId === currentUser.id);
@@ -151,35 +137,52 @@ export const getUserGoals = (): MonthlyGoal[] =>
   monthlyGoals.filter((g) => g.userId === currentUser.id);
 
 export const getTotalIncome = (): number =>
-  getUserFinancialData()
-    .filter((m) => m.revenu > 0)
-    .reduce((sum, m) => sum + m.revenu, 0);
+  getUserFinancialData().reduce((sum, m) => sum + m.revenu, 0);
 
-// =====================
-// 🔄 ACTIONS / MUTATIONS
-// =====================
-
-// 💸 Sortir de l’argent
-export const sortirArgent = (monthIndex: number, montant: number) => {
-  const data = getUserFinancialData();
-  const month = data[monthIndex];
-  if (!month) return;
-
-  const totalDepenses =
-    month.depense + month.epargne + month.investissement + month.credit;
-
-  if (montant > month.revenu - totalDepenses) {
-    console.warn("💸 Fonds insuffisants !");
-    return;
-  }
-
-  month.revenu -= montant;
+export const getTotalMoneyForCurrentUser = (): number => {
+  return getUserFinancialData().reduce(
+    (sum, m) => sum + m.revenu + m.depense + m.investissement + m.epargne,
+    0
+  );
 };
 
-// 💰 Récupérer / ajouter de l’argent
+// =====================
+// 🔄 PERSISTENCE ASYNC
+// =====================
+export const loadFinancialData = async () => {
+  try {
+    const stored = await AsyncStorage.getItem("@financialData");
+    if (stored) {
+      const parsed: FinancialMonth[] = JSON.parse(stored);
+      financialData.splice(0, financialData.length, ...parsed);
+      console.log("✅ Données chargées depuis AsyncStorage :", financialData);
+    } else {
+      console.log(
+        "ℹ️ Aucun stockage existant trouvé, données par défaut utilisées."
+      );
+    }
+  } catch (e) {
+    console.log("Erreur chargement financialData:", e);
+  }
+};
+
+const saveFinancialData = async () => {
+  try {
+    await AsyncStorage.setItem("@financialData", JSON.stringify(financialData));
+    console.log("💾 Données sauvegardées dans AsyncStorage :", financialData);
+  } catch (e) {
+    console.log("Erreur sauvegarde financialData :", e);
+  }
+};
+
+// =====================
+// 🔄 MUTATIONS
+// =====================
+
+// Ajouter / mettre à jour le revenu
 export const recupererArgent = (
   monthIndex: number,
-  montant: number,
+  revenu: number,
   depensePct: number,
   investissementPct: number,
   epargnePct: number
@@ -188,31 +191,51 @@ export const recupererArgent = (
   const month = data[monthIndex];
   if (!month) return;
 
-  month.revenu += montant;
+  const originalRevenu = month.revenu;
 
+  month.revenu += revenu;
   month.depense = Math.round((month.revenu * depensePct) / 100);
   month.epargne = Math.round((month.revenu * epargnePct) / 100);
-  month.investissement = Math.round(
-    (month.revenu * investissementPct) / 100
-  );
+  month.investissement = Math.round((month.revenu * investissementPct) / 100);
   month.credit =
     month.revenu - (month.depense + month.epargne + month.investissement);
-};
-// =====================
-// 📌 MOIS COURANT
-// =====================
-export const getCurrentMonth = (): string => {
-  const index = new Date().getMonth(); // 0–11
-  return MONTHS[index];
-};
 
-// =====================
-// 📊 BUDGET DU MOIS COURANT
-// =====================
-export const getCurrentMonthBudget = () => {
-  const month = getCurrentMonth();
-
-  return financialData.find(
-    (f) => f.userId === currentUser.id && f.month === month
+  console.log(
+    `💰 Revenu mois ${month.month} : ${originalRevenu} → ${month.revenu}`
   );
+
+  saveFinancialData();
+};
+
+// Retirer de l’argent
+export const sortirArgent = (monthIndex: number, montant: number) => {
+  const data = getUserFinancialData();
+  const month = data[monthIndex];
+  if (!month) return;
+
+  console.log(`Avant retrait : ${month.revenu} FBu`);
+
+  if (montant > month.revenu) {
+    console.warn("💸 Fonds insuffisants !");
+    return;
+  }
+
+  month.revenu -= montant;
+
+  // recalculer les autres montants proportionnellement
+  const total =
+    month.depense + month.epargne + month.investissement + month.credit;
+  if (total > 0) {
+    month.depense = Math.round((month.depense / total) * month.revenu);
+    month.epargne = Math.round((month.epargne / total) * month.revenu);
+    month.investissement = Math.round(
+      (month.investissement / total) * month.revenu
+    );
+    month.credit =
+      month.revenu - (month.depense + month.epargne + month.investissement);
+  }
+
+  console.log(`Après retrait : ${month.revenu} FBu`);
+
+  saveFinancialData();
 };

@@ -1,18 +1,29 @@
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
-import { FinancialMonth, getUserFinancialData } from "../data";
+import {
+  FinancialMonth,
+  getUserFinancialData,
+  loadFinancialData,
+} from "../data";
 
 type Props = {
   monthIndex: number;
 };
 
 export default function CadeStatistique({ monthIndex }: Props) {
-  const data = getUserFinancialData();
-  const moisData: FinancialMonth | undefined = data[monthIndex];
-
+  const [moisData, setMoisData] = useState<FinancialMonth | undefined>();
   const anim = useRef(new Animated.Value(0)).current;
 
+  // 🔄 Charger les données et mettre à jour
+  const refreshData = async () => {
+    await loadFinancialData(); // charge depuis AsyncStorage
+    const data = getUserFinancialData();
+    setMoisData(data[monthIndex]);
+  };
+
   useEffect(() => {
+    refreshData();
+
     anim.setValue(0);
     Animated.timing(anim, {
       toValue: 1,
@@ -23,7 +34,6 @@ export default function CadeStatistique({ monthIndex }: Props) {
 
   if (!moisData) return null;
 
-  // 🔢 Calcul dynamique des pourcentages
   const revenu = moisData.revenu;
   const depense = moisData.depense;
   const investissement = moisData.investissement;
