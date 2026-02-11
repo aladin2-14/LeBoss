@@ -1,5 +1,5 @@
-import { depenses } from "@/data";
-import React from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import { Dimensions, StyleSheet, Text, View } from "react-native";
 import Svg, { Circle, G } from "react-native-svg";
 
@@ -9,18 +9,34 @@ const strokeWidth = 20;
 const radius = (size - strokeWidth) / 2;
 const circumference = 2 * Math.PI * radius;
 
+type Transaction = { id: string; value: string };
+
 export default function BudgetUtilise() {
-  const total = depenses.reduce((sum, d) => sum + d.montant, 0);
+  const [depenses, setDepenses] = useState<Transaction[]>([]);
 
-  // Tri décroissant pour trouver le composant le plus élevé
-  const maxDepense = depenses.reduce((prev, current) =>
-    current.montant > prev.montant ? current : prev
-  );
+  useEffect(() => {
+    loadDepenses();
+  }, []);
 
-  // Pour chaque dépense on calcule l'offset du cercle
+  const loadDepenses = async () => {
+    try {
+      const data = await AsyncStorage.getItem("@transactions");
+      if (data) {
+        const parsed = JSON.parse(data);
+        const dep = parsed["Dépense"] || [];
+        setDepenses(dep);
+      }
+    } catch (e) {
+      console.error("Erreur lors du chargement des dépenses :", e);
+    }
+  };
+
+  const total = depenses.reduce((sum, d) => sum + Number(d.value || 0), 0);
+  const maxDepense = depenses[0] || { value: "0", id: "0" };
+
   let cumulativePercent = 0;
   const segments = depenses.map((d) => {
-    const percent = (d.montant / total) * 100;
+    const percent = 0; // on met 0% comme demandé
     const offset = cumulativePercent;
     cumulativePercent += percent;
     return {
@@ -29,8 +45,6 @@ export default function BudgetUtilise() {
       offset,
     };
   });
-
-  const maxPercent = Math.round((maxDepense.montant / total) * 100);
 
   return (
     <View style={styles.container}>
@@ -47,9 +61,11 @@ export default function BudgetUtilise() {
                   cx={size / 2}
                   cy={size / 2}
                   r={radius}
-                  stroke={seg.color}
+                  stroke="#FFD700"
                   strokeWidth={strokeWidth}
-                  strokeDasharray={`${(seg.percent / 100) * circumference} ${circumference}`}
+                  strokeDasharray={`${
+                    (seg.percent / 100) * circumference
+                  } ${circumference}`}
                   strokeDashoffset={-(seg.offset / 100) * circumference}
                   fill="transparent"
                   strokeLinecap="butt"
@@ -58,21 +74,21 @@ export default function BudgetUtilise() {
             </G>
           </Svg>
           <View style={styles.centerText}>
-            <Text style={styles.percent}>{maxPercent}%</Text>
-            <Text style={styles.label}>{maxDepense.categorie}</Text>
+            <Text style={styles.percent}>0%</Text>
+            <Text style={styles.label}>Dépenses</Text>
           </View>
         </View>
 
         {/* ================= LISTE ================= */}
         <View style={styles.list}>
-          {depenses.map((item, index) => {
-            const percent = Math.round((item.montant / total) * 100);
-
-            return (
-              <View key={index} style={styles.row}>
+          {depenses.length === 0 ? (
+            <Text style={{ color: "#9CA3AF" }}>Aucune dépense ajoutée</Text>
+          ) : (
+            depenses.map((item) => (
+              <View key={item.id} style={styles.row}>
                 <View style={styles.rowHeader}>
-                  <Text style={styles.label}>{item.categorie}</Text>
-                  <Text style={styles.value}>{percent}%</Text>
+                  <Text style={styles.label}>{item.value}</Text>
+                  <Text style={styles.value}>0%</Text>
                 </View>
 
                 <View style={styles.progressBg}>
@@ -80,15 +96,15 @@ export default function BudgetUtilise() {
                     style={[
                       styles.progressFill,
                       {
-                        width: `${percent}%`,
-                        backgroundColor: item.color,
+                        width: `0%`,
+                        backgroundColor: "#FFD700",
                       },
                     ]}
                   />
                 </View>
               </View>
-            );
-          })}
+            ))
+          )}
         </View>
       </View>
     </View>
@@ -130,11 +146,6 @@ const styles = StyleSheet.create({
 
   centerText: {
     position: "absolute",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-
-  circle: {
     justifyContent: "center",
     alignItems: "center",
   },

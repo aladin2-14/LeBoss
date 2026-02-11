@@ -198,3 +198,21 @@ export const recupererArgent = (
   month.credit =
     month.revenu - (month.depense + month.epargne + month.investissement);
 };
+// =====================
+// 📌 MOIS COURANT
+// =====================
+export const getCurrentMonth = (): string => {
+  const index = new Date().getMonth(); // 0–11
+  return MONTHS[index];
+};
+
+// =====================
+// 📊 BUDGET DU MOIS COURANT
+// =====================
+export const getCurrentMonthBudget = () => {
+  const month = getCurrentMonth();
+
+  return financialData.find(
+    (f) => f.userId === currentUser.id && f.month === month
+  );
+};

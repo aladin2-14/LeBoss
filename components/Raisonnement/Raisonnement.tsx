@@ -1,6 +1,7 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 import React, { useState } from "react";
 import {
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -11,16 +12,28 @@ import {
   View,
 } from "react-native";
 
+import { analyseBudget } from "@/components/AI/Intelligent";
+
 export default function Raisonne() {
   const [raisonnement, setRaisonnement] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const [stats, setStats] = useState({
+    depense: { pourcentage: 0, action: "-" },
+    investissement: { pourcentage: 0, action: "-" },
+    epargne: { pourcentage: 0, action: "-" },
+  });
 
   const handleSubmit = () => {
     if (!raisonnement.trim()) return;
 
-    console.log("Objectif envoyé :", raisonnement);
+    setLoading(true);
 
-    // Plus tard : API / stockage local
-    // setRaisonnement("");
+    setTimeout(() => {
+      const result = analyseBudget(raisonnement);
+      setStats(result);
+      setLoading(false);
+    }, 600); // effet "analyse intelligente"
   };
 
   return (
@@ -33,7 +46,7 @@ export default function Raisonne() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        {/* 📝 Input objectif */}
+        {/* 📝 INPUT */}
         <View style={styles.inputContainer}>
           <TextInput
             placeholder="Exprime comment tu veux gérer ton argent ou ton objectif du mois"
@@ -55,13 +68,14 @@ export default function Raisonne() {
                 { opacity: raisonnement.trim() ? 1 : 0.4 },
               ]}
             >
-              {/* <Text style={styles.sendButtonText}>Enregistrer</Text> */}
-              <FontAwesome style={styles.sendButtonText} name="send" size={20} color="black" />
+              <FontAwesome name="send" size={20} color="black" />
             </Pressable>
           </View>
         </View>
 
-        {/* 🎨 Blocs catégories */}
+        {loading && <ActivityIndicator size="large" color="#FFD700" />}
+
+        {/* 🎨 BLOCS (INCHANGÉS) */}
         <View style={styles.blocksRow}>
           <View style={[styles.block, styles.depense]}>
             <Text style={styles.blockTitle}>Dépense</Text>
@@ -79,30 +93,32 @@ export default function Raisonne() {
 
           <View style={[styles.block, styles.epargne]}>
             <Text style={styles.blockTitle}>Épargne</Text>
-            <Text style={styles.item}>• Banque A</Text>
+            <Text style={styles.item}>• CXM</Text>
             <Text style={styles.item}>• Banque B</Text>
             <Text style={styles.item}>• Mobile Money</Text>
           </View>
         </View>
 
-        {/* 📊 Stats statiques */}
+        {/* 📊 STATS (DYNAMIQUES, UI IDENTIQUE) */}
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Objectif</Text>
-            <Text style={styles.statValue}>60 %</Text>
-            <Text style={styles.depen}>Diminuer</Text>
+            <Text style={styles.statValue}>{stats.depense.pourcentage} %</Text>
+            <Text style={styles.depen}>{stats.depense.action}</Text>
           </View>
 
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Objectif</Text>
-            <Text style={styles.statValue}>10 %</Text>
-            <Text style={styles.invest}>Diminuer</Text>
+            <Text style={styles.statValue}>
+              {stats.investissement.pourcentage} %
+            </Text>
+            <Text style={styles.invest}>{stats.investissement.action}</Text>
           </View>
 
           <View style={styles.statBox}>
             <Text style={styles.statLabel}>Objectif</Text>
-            <Text style={styles.statValue}>20 %</Text>
-            <Text style={styles.epargneText}>Augmentation</Text>
+            <Text style={styles.statValue}>{stats.epargne.pourcentage} %</Text>
+            <Text style={styles.epargneText}>{stats.epargne.action}</Text>
           </View>
         </View>
       </ScrollView>
@@ -156,7 +172,6 @@ const styles = StyleSheet.create({
   },
   sendButtonText: {
     color: "#000",
-
   },
 
   counter: {
