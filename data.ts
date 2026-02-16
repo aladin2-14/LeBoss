@@ -31,7 +31,6 @@ export type FinancialMonth = {
   investissement: number;
   credit: number;
 };
-
 export type MonthlyGoal = {
   userId: string;
   month: string;
@@ -39,12 +38,7 @@ export type MonthlyGoal = {
   description: string;
   status: "in-progress" | "achieved" | "failed";
 };
-
-export type Depense = {
-  categorie: string;
-  montant: number;
-  color: string;
-};
+export type Depense = { categorie: string; montant: number; color: string };
 
 // ===============================
 // 📅 2️⃣ CONSTANTES
@@ -233,7 +227,7 @@ export const getCurrentMonthTotal = (): number => {
 // 💰 Ajouter argent
 export const recupererArgent = async (
   monthIndex: number,
-  montant: number,
+  revenu: number,
   depensePct: number,
   investissementPct: number,
   epargnePct: number
@@ -242,8 +236,9 @@ export const recupererArgent = async (
   const month = data[monthIndex];
   if (!month) return;
 
-  month.revenu += montant;
+  const originalRevenu = month.revenu;
 
+  month.revenu += revenu;
   month.depense = Math.round((month.revenu * depensePct) / 100);
   month.epargne = Math.round((month.revenu * epargnePct) / 100);
   month.investissement = Math.round((month.revenu * investissementPct) / 100);
