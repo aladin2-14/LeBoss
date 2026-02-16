@@ -1,6 +1,22 @@
-// =====================
-// 🧩 TYPES
-// =====================
+// ===============================
+// 📦 IMPORTS
+// ===============================
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const GOALS_KEY = "MONTHLY_GOALS";
+
+let monthlyGoalsStorage: MonthlyGoal[] = [];
+
+// Charger les données depuis AsyncStorage
+const loadData = async () => {
+  const storedGoals = await AsyncStorage.getItem(GOALS_KEY);
+  monthlyGoalsStorage = storedGoals ? JSON.parse(storedGoals) : [];
+};
+
+// ===============================
+// 🧩 1️⃣ TYPES (MODELES DE DONNEES)
+// ===============================
+
 export type User = {
   id: string;
   name: string;
@@ -30,9 +46,10 @@ export type Depense = {
   color: string;
 };
 
-// =====================
-// 📅 CONSTANTES
-// =====================
+// ===============================
+// 📅 2️⃣ CONSTANTES
+// ===============================
+
 export const MONTHS = [
   "Janvier",
   "Février",
@@ -48,136 +65,173 @@ export const MONTHS = [
   "Décembre",
 ];
 
-const GOAL_TEMPLATES = [
-  {
-    title: "Augmenter mon épargne",
-    description: "Mettre plus d’argent de côté chaque mois",
-  },
-  {
-    title: "Mieux contrôler mes dépenses",
-    description: "Réduire les dépenses inutiles",
-  },
-  {
-    title: "Investir intelligemment",
-    description: "Placer une partie du revenu dans des investissements",
-  },
-  {
-    title: "Préparer un grand projet",
-    description: "Mettre de l’argent de côté pour un projet important",
-  },
-];
+// ===============================
+// 💾 3️⃣ CLES DE STOCKAGE
+// ===============================
 
-const STATUSES: MonthlyGoal["status"][] = ["achieved", "in-progress", "failed"];
+const STORAGE_KEYS = {
+  USER: "@current_user",
+  FINANCE: "@financial_data",
+  GOALS: "@monthly_goals",
+  DEPENSES: "@depenses",
+};
 
-// =====================
-// 👤 UTILISATEURS
-// =====================
+// ===============================
+// 👤 4️⃣ UTILISATEURS
+// ===============================
+
 export const users: User[] = [
   { id: "u001", name: "NIYONKIZA Jean Michel" },
   { id: "u002", name: "Aline Mukamana" },
   { id: "u003", name: "Eric Ndayishimiye" },
 ];
 
-// =====================
-// 👤 UTILISATEUR COURANT (STATE GLOBAL SIMPLE)
-// =====================
+// utilisateur actif (state global simple)
 export let currentUser: User = users[0];
 
-export const setCurrentUser = (userId: string) => {
-  const user = users.find((u) => u.id === userId);
-  if (user) currentUser = user;
+// ===============================
+// 🔐 5️⃣ GESTION UTILISATEUR PERSISTANT
+// ===============================
+
+export const loadCurrentUser = async () => {
+  const data = await AsyncStorage.getItem(STORAGE_KEYS.USER);
+  if (data) {
+    currentUser = JSON.parse(data);
+  }
 };
 
-// =====================
-// 🛠️ HELPERS
-// =====================
-function random(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
-}
+export const setCurrentUser = async (userId: string) => {
+  const user = users.find((u) => u.id === userId);
+  if (!user) return;
 
-// =====================
-// 📊 DONNÉES FINANCIÈRES (tous les mois à 0 FBU)
-// =====================
-export const financialData: FinancialMonth[] = users.flatMap((user) =>
-  MONTHS.map((month) => {
-    return {
-      userId: user.id,
-      month,
-      revenu: 0, // 👈 aucun argent au départ
-      epargne: 0,
-      depense: 0,
-      investissement: 0,
-      credit: 0,
-    };
-  })
+  currentUser = user;
+  await AsyncStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
+};
+
+// ===============================
+// 📊 6️⃣ DONNEES FINANCIERES (INIT)
+// ===============================
+
+export let financialData: FinancialMonth[] = users.flatMap((user) =>
+  MONTHS.map((month) => ({
+    userId: user.id,
+    month,
+    revenu: 0,
+    epargne: 0,
+    depense: 0,
+    investissement: 0,
+    credit: 0,
+  }))
 );
 
-// =====================
-// 💸 DÉPENSES PAR CATÉGORIE
-// =====================
-export const depenses: Depense[] = [
+// ===============================
+// 💾 7️⃣ PERSISTANCE FINANCIERE
+// ===============================
+
+export const saveFinancialData = async () => {
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.FINANCE,
+    JSON.stringify(financialData)
+  );
+};
+
+export const loadFinancialData = async () => {
+  const data = await AsyncStorage.getItem(STORAGE_KEYS.FINANCE);
+  if (data) {
+    financialData = JSON.parse(data);
+  }
+};
+
+// ===============================
+// 💸 8️⃣ DEPENSES
+// ===============================
+
+export let depenses: Depense[] = [
   { categorie: "Nourriture", montant: 90000, color: "#3B82F6" },
   { categorie: "Déplacement", montant: 40000, color: "#FACC15" },
   { categorie: "Maison", montant: 100000, color: "#A855F7" },
-  { categorie: "Projets", montant: 50000, color: "#22C55E" },
 ];
 
-// =====================
-// 🎯 OBJECTIFS MENSUELS
-// =====================
-export const monthlyGoals: MonthlyGoal[] = users.flatMap((user) =>
-  MONTHS.flatMap((month) => {
-    const count = random(1, 3);
-    return Array.from({ length: count }).map(() => {
-      const tpl = GOAL_TEMPLATES[random(0, GOAL_TEMPLATES.length - 1)];
-      return {
-        userId: user.id,
-        month,
-        title: tpl.title,
-        description: tpl.description,
-        status: STATUSES[random(0, STATUSES.length - 1)],
-      };
-    });
-  })
-);
+export const saveDepenses = async () => {
+  await AsyncStorage.setItem(STORAGE_KEYS.DEPENSES, JSON.stringify(depenses));
+};
 
-// =====================
-// 🔍 SELECTEURS (GETTERS)
-// =====================
+export const loadDepenses = async () => {
+  const data = await AsyncStorage.getItem(STORAGE_KEYS.DEPENSES);
+  if (data) {
+    depenses = JSON.parse(data);
+  }
+};
+
+// ===============================
+// 🎯 9️⃣ OBJECTIFS
+// ===============================
+
+export let monthlyGoals: MonthlyGoal[] = [];
+
+export const saveGoals = async () => {
+  await AsyncStorage.setItem(STORAGE_KEYS.GOALS, JSON.stringify(monthlyGoals));
+};
+
+export const loadGoals = async () => {
+  const data = await AsyncStorage.getItem(STORAGE_KEYS.GOALS);
+  if (data) {
+    monthlyGoals = JSON.parse(data);
+  }
+};
+// ===============================
+// 🔍 GETTERS
+// ===============================
+
+// Données financières utilisateur
 export const getUserFinancialData = (): FinancialMonth[] =>
   financialData.filter((f) => f.userId === currentUser.id);
 
-export const getUserGoals = (): MonthlyGoal[] =>
-  monthlyGoals.filter((g) => g.userId === currentUser.id);
-
-export const getTotalIncome = (): number =>
-  getUserFinancialData()
-    .filter((m) => m.revenu > 0)
-    .reduce((sum, m) => sum + m.revenu, 0);
-
-// =====================
-// 🔄 ACTIONS / MUTATIONS
-// =====================
-
-// 💸 Sortir de l’argent
-export const sortirArgent = (monthIndex: number, montant: number) => {
-  const data = getUserFinancialData();
-  const month = data[monthIndex];
-  if (!month) return;
-
-  const totalDepenses =
-    month.depense + month.epargne + month.investissement + month.credit;
-
-  if (montant > month.revenu - totalDepenses) {
-    console.warn("💸 Fonds insuffisants !");
-    return;
+// Objectifs utilisateur
+export const getUserGoals = async (
+  monthIndex?: number
+): Promise<MonthlyGoal[]> => {
+  await loadGoals(); // charge AsyncStorage
+  if (monthIndex !== undefined) {
+    const month = MONTHS[monthIndex];
+    return monthlyGoals.filter(
+      (g) => g.userId === currentUser.id && g.month === month
+    );
   }
-
-  month.revenu -= montant;
+  return monthlyGoals.filter((g) => g.userId === currentUser.id);
 };
 
-// 💰 Récupérer / ajouter de l’argent
-export const recupererArgent = (
+// Ajouter un objectif
+export const addGoal = async (goal: MonthlyGoal) => {
+  monthlyGoals.push(goal);
+  await saveGoals();
+};
+
+// Mois courant
+export const getCurrentMonth = (): string => MONTHS[new Date().getMonth()];
+
+// Budget mois courant
+export const getCurrentMonthBudget = () =>
+  financialData.find(
+    (f) => f.userId === currentUser.id && f.month === getCurrentMonth()
+  );
+
+// Total annuel
+export const getTotalCollected = (): number =>
+  getUserFinancialData().reduce((sum, m) => sum + m.revenu, 0);
+
+// Total mois courant
+export const getCurrentMonthTotal = (): number => {
+  const current = getCurrentMonthBudget();
+  return current ? current.revenu : 0;
+};
+
+// ===============================
+// 🔄 1️⃣1️⃣ ACTIONS (MODIFICATIONS)
+// ===============================
+
+// 💰 Ajouter argent
+export const recupererArgent = async (
   monthIndex: number,
   montant: number,
   depensePct: number,
@@ -192,27 +246,36 @@ export const recupererArgent = (
 
   month.depense = Math.round((month.revenu * depensePct) / 100);
   month.epargne = Math.round((month.revenu * epargnePct) / 100);
-  month.investissement = Math.round(
-    (month.revenu * investissementPct) / 100
-  );
+  month.investissement = Math.round((month.revenu * investissementPct) / 100);
   month.credit =
     month.revenu - (month.depense + month.epargne + month.investissement);
-};
-// =====================
-// 📌 MOIS COURANT
-// =====================
-export const getCurrentMonth = (): string => {
-  const index = new Date().getMonth(); // 0–11
-  return MONTHS[index];
+
+  await saveFinancialData();
 };
 
-// =====================
-// 📊 BUDGET DU MOIS COURANT
-// =====================
-export const getCurrentMonthBudget = () => {
-  const month = getCurrentMonth();
+// 💸 Sortir argent (agit sur le mois seulement)
+export const sortirArgent = async (monthIndex: number, montant: number) => {
+  const data = getUserFinancialData();
+  const month = data[monthIndex];
+  if (!month) return;
 
-  return financialData.find(
-    (f) => f.userId === currentUser.id && f.month === month
-  );
+  if (montant > month.revenu) {
+    console.warn("Fonds insuffisants !");
+    return;
+  }
+
+  month.revenu -= montant;
+
+  await saveFinancialData();
+};
+
+// ===============================
+// 🚀 1️⃣2️⃣ INITIALISATION GLOBALE
+// ===============================
+
+export const initializeAppData = async () => {
+  await loadCurrentUser();
+  await loadFinancialData();
+  await loadGoals();
+  await loadDepenses();
 };
