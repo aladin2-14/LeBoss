@@ -38,6 +38,7 @@ export default function AjoutObjectif({ monthIndex }: { monthIndex: number }) {
     setTitle("");
     setDescription("");
     setVisible(false);
+    console.log("Dans mon storage : ", stored)
   };
 
   return (
@@ -123,3 +124,4 @@ const styles = StyleSheet.create({
   },
   createButtonText: { color: "#101C36", fontWeight: "700", fontSize: 16 },
 });
+ 

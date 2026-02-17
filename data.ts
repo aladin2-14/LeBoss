@@ -63,7 +63,7 @@ export const MONTHS = [
 // 💾 3️⃣ CLES DE STOCKAGE
 // ===============================
 
-const STORAGE_KEYS = {
+export const STORAGE_KEYS = {
   USER: "@current_user",
   FINANCE: "@financial_data",
   GOALS: "@monthly_goals",

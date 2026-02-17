@@ -12,40 +12,38 @@ import {
 
 export default function Historique() {
   const { width, height } = useWindowDimensions();
-  const [goals, setGoals] = useState<MonthlyGoal[]>([]);
-  const [activeMonthIndex, setActiveMonthIndex] = useState<number | null>(null);
 
-  // Charger les objectifs
+  // 📌 Mois actuel par défaut
+  const currentMonthIndex = new Date().getMonth();
+
+  const [goals, setGoals] = useState<MonthlyGoal[]>([]);
+  const [activeMonthIndex, setActiveMonthIndex] =
+    useState<number>(currentMonthIndex);
+
+  // 🔥 Charger les objectifs du mois actuel au démarrage
   useEffect(() => {
-    const loadAllGoals = async () => {
-      const data = await getUserGoals();
-      setGoals(data);
-    };
-    loadAllGoals();
+    loadGoals(currentMonthIndex);
   }, []);
 
-  // Quand on clique sur un mois
-  // Quand on clique sur un mois
+  const loadGoals = async (monthIndex: number) => {
+    const data = await getUserGoals(monthIndex);
+    setGoals(data);
+  };
+
+  // 📌 Quand on clique sur un mois
   const handleMonthPress = async (index: number) => {
-    console.log("🟢 Mois cliqué:", MONTHS[index], "Index:", index); // log du mois et de son index
-    if (activeMonthIndex === index) {
-      setActiveMonthIndex(null); // décocher
-      const allGoals = await getUserGoals();
-      console.log("📦 Tous les objectifs:", allGoals); // log de tous les objectifs
-      setGoals(allGoals);
-    } else {
-      setActiveMonthIndex(index);
-      const filtered = await getUserGoals(index);
-      console.log("📌 Objectifs filtrés pour", MONTHS[index], ":", filtered); // log objectifs filtrés
-      setGoals(filtered);
-    }
+    console.log("🟢 Mois cliqué :", MONTHS[index], "==", index);
+    setActiveMonthIndex(index);
+    await loadGoals(index);
   };
 
   return (
     <View
       style={[styles.container, { width: width * 0.95, height: height * 0.41 }]}
     >
-      {/* BARRE DES MOIS */}
+      {/* ========================= */}
+      {/* 🟡 BARRE DES MOIS */}
+      {/* ========================= */}
       <View style={styles.monthBar}>
         {MONTHS.map((month, index) => {
           const letter = month.charAt(0).toUpperCase();
@@ -70,50 +68,57 @@ export default function Historique() {
         })}
       </View>
 
-      {/* HISTORIQUE */}
+      {/* ========================= */}
+      {/* 🟡 HISTORIQUE + BOUTON */}
+      {/* ========================= */}
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       >
         <View style={styles.historiqueWrapper}>
-          <Bhistorique />
+          <Bhistorique monthIndex={activeMonthIndex} />
         </View>
-
-        {goals.map((goal, index) => (
-          <View key={index} style={styles.item}>
-            <Text style={styles.month}>{goal.month}</Text>
-            <Text style={styles.title}>{goal.title}</Text>
-            <Text style={styles.desc}>{goal.description}</Text>
-            <Text
-              style={[
-                styles.status,
-                {
-                  color:
-                    goal.status === "achieved"
-                      ? "#4CAF50"
-                      : goal.status === "in-progress"
-                      ? "#FFC107"
-                      : "#FF5252",
-                },
-              ]}
-            >
-              {goal.status === "achieved"
-                ? "Objectif atteint"
-                : goal.status === "in-progress"
-                ? "En cours"
-                : "Non atteint"}
+        {goals.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <Text style={styles.emptyText}>
+              Aucun historique pour le mois de {MONTHS[activeMonthIndex]}.
             </Text>
           </View>
-        ))}
+        ) : (
+          goals.map((goal, index) => (
+            <View key={index} style={styles.item}>
+              <Text style={styles.month}>{goal.month}</Text>
+              <Text style={styles.title}>{goal.title}</Text>
+              <Text style={styles.desc}>{goal.description}</Text>
+              <Text
+                style={[
+                  styles.status,
+                  {
+                    color:
+                      goal.status === "achieved"
+                        ? "#4CAF50"
+                        : goal.status === "in-progress"
+                        ? "#FFC107"
+                        : "#FF5252",
+                  },
+                ]}
+              >
+                {goal.status === "achieved"
+                  ? "Objectif atteint"
+                  : goal.status === "in-progress"
+                  ? "En cours"
+                  : "Non atteint"}
+              </Text>
+            </View>
+          ))
+        )}
       </ScrollView>
     </View>
   );
 }
 
-// Styles inchangés
-
 // ===============================
-// 🎨 STYLES (inchangés)
+// 🎨 STYLES
 // ===============================
 const styles = StyleSheet.create({
   container: {
@@ -136,7 +141,6 @@ const styles = StyleSheet.create({
   monthItem: {
     flex: 1,
     height: 38,
-    gap: 2,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: "#363741",
@@ -188,4 +192,19 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 12,
   },
+  emptyContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 30,
+    width: "100%", // pour s’assurer que le texte prend toute la largeur
+  },
+  emptyText: {
+    color: "#888",
+    fontSize: 14,
+    fontStyle: "italic",
+    textAlign: "center", // centre le texte
+    flexWrap: "wrap",    // autorise le retour à la ligne
+    width: "90%",        // pour limiter la largeur à 90% de la zone parent
+  },
+  
 });
