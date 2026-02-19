@@ -227,25 +227,35 @@ export const getCurrentMonthTotal = (): number => {
 // 💰 Ajouter argent
 export const recupererArgent = async (
   monthIndex: number,
-  revenu: number,
+  montant: number,
   depensePct: number,
   investissementPct: number,
   epargnePct: number
 ) => {
-  const data = getUserFinancialData();
-  const month = data[monthIndex];
+  // 🔹 Filtrer les données de l'utilisateur connecté
+  const userData = financialData.filter((f) => f.userId === currentUser.id);
+
+  const month = userData[monthIndex];
   if (!month) return;
 
-  const originalRevenu = month.revenu;
+  // 🔹 Ajouter montant
+  month.revenu += montant;
 
-  month.revenu += revenu;
+  // 🔹 Recalcul
   month.depense = Math.round((month.revenu * depensePct) / 100);
-  month.epargne = Math.round((month.revenu * epargnePct) / 100);
   month.investissement = Math.round((month.revenu * investissementPct) / 100);
-  month.credit =
-    month.revenu - (month.depense + month.epargne + month.investissement);
+  month.epargne = Math.round((month.revenu * epargnePct) / 100);
 
-  await saveFinancialData();
+  month.credit =
+    month.revenu - (month.depense + month.investissement + month.epargne);
+
+  // 🔹 Sauvegarde AsyncStorage
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.FINANCE,
+    JSON.stringify(financialData)
+  );
+  const stored = await AsyncStorage.getItem(STORAGE_KEYS.FINANCE);
+  console.log("✅ Contenu actuel dans AsyncStorage :", JSON.parse(stored!));
 };
 
 // 💸 Sortir argent (agit sur le mois seulement)

@@ -1,9 +1,7 @@
-import { recupererArgent } from "@/data";
+import { financialData, recupererArgent } from "@/data";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
-  LayoutAnimation,
   Modal,
   Platform,
   Pressable,
@@ -25,14 +23,14 @@ interface Props {
   visible: boolean;
   monthIndex: number;
   onClose: () => void;
-  onConfirm: () => void; // simple callback
+  onUpdate?: () => void; // callback pour refresh stats
 }
 
 export default function ModalM({
   visible,
   monthIndex,
   onClose,
-  onConfirm,
+  onUpdate,
 }: Props) {
   const [montant, setMontant] = useState("");
   const [open, setOpen] = useState(false);
@@ -40,71 +38,50 @@ export default function ModalM({
   const [investissement, setInvestissement] = useState("0");
   const [epargne, setEpargne] = useState("0");
 
-  const toggle = () => {
-    LayoutAnimation.easeInEaseOut();
-    setOpen(!open);
-  };
-
-  // 🔹 Fonction de vérification AsyncStorage
-  const checkAsyncStorage = async () => {
-    try {
-      const stored = await AsyncStorage.getItem("@financialData");
-      console.log(
-        "🔍 AsyncStorage current state:",
-        stored ? JSON.parse(stored) : "vide"
-      );
-    } catch (e) {
-      console.log("Erreur lecture AsyncStorage:", e);
-    }
-  };
-
-  // 🔹 Vérifie les données à chaque ouverture du modal
-  useEffect(() => {
-    if (visible) {
-      checkAsyncStorage();
-    }
-  }, [visible]);
-
   const handleConfirm = async () => {
     const montantNum = parseFloat(montant);
     const depensePct = parseFloat(depense);
     const investissementPct = parseFloat(investissement);
     const epargnePct = parseFloat(epargne);
-
-    if (!isNaN(montantNum) && montantNum > 0) {
-      // Envoie les données à data.ts
-      await recupererArgent(
-        monthIndex,
-        montantNum,
-        depensePct,
-        investissementPct,
-        epargnePct
-      );
-
-      // 🔹 Vérifie AsyncStorage après mise à jour
-      await checkAsyncStorage();
-
-      Toast.show({
-        type: "success",
-        text1: `Vous venez de recharger : ${montantNum.toLocaleString()} FBu`,
-        position: "bottom",
-        visibilityTime: 2500,
-        bottomOffset: 60,
-      });
-
-      Vibration.vibrate(100);
-      setMontant("");
-      onClose();
-      onConfirm(); // callback simple
-    } else {
+    if (isNaN(montantNum) || montantNum <= 0) {
       Toast.show({
         type: "error",
         text1: "Montant invalide",
         position: "bottom",
-        visibilityTime: 2000,
-        bottomOffset: 60,
       });
+      return;
     }
+    console.log("💡 Envoi vers data :", {
+      monthIndex,
+      montantNum,
+      depensePct,
+      investissementPct,
+      epargnePct,
+    });
+    console.log(financialData)
+    await recupererArgent(
+      monthIndex,
+      montantNum,
+      depensePct,
+      investissementPct,
+      epargnePct
+    );
+    Toast.show({
+      type: "success",
+      text1: "Montant ajouté",
+      position: "bottom",
+      bottomOffset: 60,
+    });
+    Vibration.vibrate(100);
+
+    // reset
+    setMontant("");
+    setDepense("0");
+    setInvestissement("0");
+    setEpargne("0");
+
+    onClose();
+    onUpdate?.(); // 🔹 refresh CadeStatistique
   };
 
   return (
@@ -112,7 +89,6 @@ export default function ModalM({
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={() => {}}>
           <Text style={styles.title}>Récupération</Text>
-
           <TextInput
             style={styles.input}
             placeholder="Montant"
@@ -122,7 +98,7 @@ export default function ModalM({
             onChangeText={setMontant}
           />
 
-          <Pressable onPress={toggle} style={styles.paramRow}>
+          <Pressable onPress={() => setOpen(!open)} style={styles.paramRow}>
             <Text style={styles.paramText}>
               Modifier les paramètres existants
             </Text>
@@ -162,7 +138,15 @@ export default function ModalM({
   );
 }
 
-function PercentField({ label, value, setValue }: any) {
+function PercentField({
+  label,
+  value,
+  setValue,
+}: {
+  label: string;
+  value: string;
+  setValue: (v: string) => void;
+}) {
   return (
     <View style={styles.percentRow}>
       <Text style={styles.label}>{label}</Text>

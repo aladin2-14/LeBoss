@@ -1,5 +1,4 @@
 import ModalM from "@/components/Modal/ModalM";
-import { recupererArgent } from "@/data";
 import React, { useState } from "react";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
@@ -9,23 +8,7 @@ type Props = {
 
 export default function Mettre({ monthIndex }: Props) {
   const [open, setOpen] = useState(false);
-
-  const handleConfirm = (
-    monthIndex: number,
-    montant: number,
-    depensePct: number,
-    investissementPct: number,
-    epargnePct: number
-  ) => {
-    recupererArgent(
-      monthIndex,
-      montant,
-      depensePct,
-      investissementPct,
-      epargnePct
-    );
-    setOpen(false);
-  };
+  const [refreshTrigger, setRefreshTrigger] = useState(0); // pour refresh CadeStatistique
 
   return (
     <View>
@@ -37,7 +20,7 @@ export default function Mettre({ monthIndex }: Props) {
         visible={open}
         monthIndex={monthIndex}
         onClose={() => setOpen(false)}
-        onConfirm={handleConfirm}
+        onUpdate={() => setRefreshTrigger((prev) => prev + 1)} // 🔹 déclenche refresh
       />
     </View>
   );
@@ -52,5 +35,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  text: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
+  text: {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "700",
+  },
 });
