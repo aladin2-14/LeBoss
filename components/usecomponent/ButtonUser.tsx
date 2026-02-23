@@ -153,6 +153,7 @@ export default function WalletTabs() {
                           style={styles.input}
                           placeholder={`Ajouter ${item.label}`}
                           value={inputValue}
+                          placeholderTextColor="#FFFFFF"
                           onChangeText={setInputValue}
                         />
                         <TouchableOpacity
@@ -160,7 +161,7 @@ export default function WalletTabs() {
                           onPress={() => saveTransaction(item.label)}
                         >
                           {/* <Text style={styles.addButtonText}>Ajouter</Text> */}
-                          <Ionicons name="add" size={24} color="black" />
+                          <Ionicons name="add" size={20} color="black" />
                         </TouchableOpacity>
                       </View>
 

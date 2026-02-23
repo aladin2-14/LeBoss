@@ -260,8 +260,10 @@ export const recupererArgent = async (
 
 // 💸 Sortir argent (agit sur le mois seulement)
 export const sortirArgent = async (monthIndex: number, montant: number) => {
-  const data = getUserFinancialData();
-  const month = data[monthIndex];
+  // 🔹 Filtrer les données utilisateur
+  const userData = financialData.filter((f) => f.userId === currentUser.id);
+
+  const month = userData[monthIndex];
   if (!month) return;
 
   if (montant > month.revenu) {
@@ -269,11 +271,29 @@ export const sortirArgent = async (monthIndex: number, montant: number) => {
     return;
   }
 
+  // 🔹 Diminuer le revenu
   month.revenu -= montant;
 
-  await saveFinancialData();
-};
+  // 🔹 Recalcul automatique des catégories
+  const total = month.depense + month.investissement + month.epargne;
 
+  if (total > 0) {
+    const ratio = month.revenu / (month.revenu + montant);
+
+    month.depense = Math.round(month.depense * ratio);
+    month.investissement = Math.round(month.investissement * ratio);
+    month.epargne = Math.round(month.epargne * ratio);
+  }
+
+  month.credit =
+    month.revenu - (month.depense + month.investissement + month.epargne);
+
+  // 🔹 Sauvegarde
+  await AsyncStorage.setItem(
+    STORAGE_KEYS.FINANCE,
+    JSON.stringify(financialData)
+  );
+};
 // ===============================
 // 🚀 1️⃣2️⃣ INITIALISATION GLOBALE
 // ===============================

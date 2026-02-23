@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -8,30 +9,36 @@ import {
   Vibration,
 } from "react-native";
 import Toast from "react-native-toast-message";
+import { sortirArgent } from "../../data";
 
 interface Props {
   visible: boolean;
   monthIndex: number;
-  solde: number; // solde réel du mois
+  solde: number;
   onClose: () => void;
-  onConfirm: (monthIndex: number, montant: number) => void;
 }
 
-export default function ModalS({
-  visible,
-  monthIndex,
-  solde,
-  onClose,
-  onConfirm,
-}: Props) {
+export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
   const [montant, setMontant] = useState("");
+  const [transactions, setTransactions] = useState<{ [key: string]: any[] }>(
+    {}
+  );
 
-  const handleConfirm = () => {
+  // 🔹 Charger les transactions depuis AsyncStorage
+  useEffect(() => {
+    const loadTransactions = async () => {
+      const data = await AsyncStorage.getItem("@transactions");
+      if (data) {
+        setTransactions(JSON.parse(data));
+      }
+    };
+    loadTransactions();
+  }, [visible]); // se recharge à chaque ouverture du modal
+
+  const handleConfirm = async () => {
     const montantNum = parseFloat(montant);
 
-    // Vérification si montant valide
     if (isNaN(montantNum) || montantNum <= 0 || montantNum > solde) {
-      // 🔹 Toast déclenché si le montant est invalide ou si le montant > solde
       Toast.show({
         type: "error",
         text1: "Erreur",
@@ -40,17 +47,27 @@ export default function ModalS({
         bottomOffset: 50,
         visibilityTime: 2500,
       });
-
-      // Optionnel : vibration pour alerter l'utilisateur
       Vibration.vibrate(300);
-
-      return; // bloque la suite si erreur
+      return;
     }
 
-    // Tout va bien → succès
-    onConfirm(monthIndex, montantNum);
-    Vibration.vibrate(100);
+    // Appel à ta fonction sortirArgent
+    sortirArgent(monthIndex, montantNum);
 
+    // 🔹 Exemple : mettre à jour @transactions si tu veux
+    const updated = {
+      ...transactions,
+      Sortie: transactions["Sortie"]
+        ? [
+            ...transactions["Sortie"],
+            { id: Date.now().toString(), value: montantNum },
+          ]
+        : [{ id: Date.now().toString(), value: montantNum }],
+    };
+    setTransactions(updated);
+    await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
+
+    Vibration.vibrate(100);
     Toast.show({
       type: "success",
       text1: "Montant retiré",
@@ -69,6 +86,7 @@ export default function ModalS({
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={() => {}}>
           <Text style={styles.title}>Sortir de l'argent</Text>
+
           <TextInput
             style={styles.input}
             placeholder="Montant"
@@ -77,6 +95,7 @@ export default function ModalS({
             value={montant}
             onChangeText={setMontant}
           />
+
           <Pressable style={styles.btn} onPress={handleConfirm}>
             <Text style={styles.btnText}>Valider</Text>
           </Pressable>
@@ -85,7 +104,6 @@ export default function ModalS({
     </Modal>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -116,7 +134,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFF",
     marginBottom: 10,
-    borderWidth: 0,
   },
 
   btn: {
