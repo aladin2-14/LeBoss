@@ -80,7 +80,7 @@ export default function CadeStatistique({ monthIndex, refreshTrigger }: Props) {
           <Text
             style={styles.value}
           >
-            {item.value}
+            {item.value} Fbu
           </Text>
         </View>
       ))}

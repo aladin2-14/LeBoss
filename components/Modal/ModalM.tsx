@@ -1,6 +1,6 @@
-import { financialData, recupererArgent } from "@/data";
+import { getUserFinancialData, recupererArgent } from "@/data";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   Platform,
@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import Toast from "react-native-toast-message";
 
-// 🔹 Active les animations sur Android
 if (Platform.OS === "android") {
   UIManager.setLayoutAnimationEnabledExperimental?.(true);
 }
@@ -23,7 +22,7 @@ interface Props {
   visible: boolean;
   monthIndex: number;
   onClose: () => void;
-  onUpdate?: () => void; // callback pour refresh stats
+  onUpdate?: () => void;
 }
 
 export default function ModalM({
@@ -38,11 +37,35 @@ export default function ModalM({
   const [investissement, setInvestissement] = useState("0");
   const [epargne, setEpargne] = useState("0");
 
+  // ✅ Pré-remplissage automatique des %
+  useEffect(() => {
+    if (!visible) return;
+
+    const data = getUserFinancialData();
+    const month = data[monthIndex];
+    if (!month) return;
+
+    const revenu = month.revenu;
+
+    if (revenu > 0) {
+      const depensePct = ((month.depense / revenu) * 100).toFixed(1);
+      const investissementPct = ((month.investissement / revenu) * 100).toFixed(
+        1
+      );
+      const epargnePct = ((month.epargne / revenu) * 100).toFixed(1);
+
+      setDepense(depensePct);
+      setInvestissement(investissementPct);
+      setEpargne(epargnePct);
+    }
+  }, [visible, monthIndex]);
+
   const handleConfirm = async () => {
     const montantNum = parseFloat(montant);
     const depensePct = parseFloat(depense);
     const investissementPct = parseFloat(investissement);
     const epargnePct = parseFloat(epargne);
+
     if (isNaN(montantNum) || montantNum <= 0) {
       Toast.show({
         type: "error",
@@ -51,14 +74,7 @@ export default function ModalM({
       });
       return;
     }
-    console.log("💡 Envoi vers data :", {
-      monthIndex,
-      montantNum,
-      depensePct,
-      investissementPct,
-      epargnePct,
-    });
-    console.log(financialData)
+
     await recupererArgent(
       monthIndex,
       montantNum,
@@ -66,22 +82,19 @@ export default function ModalM({
       investissementPct,
       epargnePct
     );
+
     Toast.show({
       type: "success",
       text1: "Montant ajouté",
       position: "bottom",
       bottomOffset: 60,
     });
+
     Vibration.vibrate(100);
 
-    // reset
     setMontant("");
-    setDepense("0");
-    setInvestissement("0");
-    setEpargne("0");
-
     onClose();
-    onUpdate?.(); // 🔹 refresh CadeStatistique
+    onUpdate?.();
   };
 
   return (
@@ -89,6 +102,7 @@ export default function ModalM({
       <Pressable style={styles.overlay} onPress={onClose}>
         <Pressable style={styles.container} onPress={() => {}}>
           <Text style={styles.title}>Récupération</Text>
+
           <TextInput
             style={styles.input}
             placeholder="Montant"
@@ -138,6 +152,7 @@ export default function ModalM({
   );
 }
 
+// ✅ Ton composant PercentField (important)
 function PercentField({
   label,
   value,
@@ -162,7 +177,6 @@ function PercentField({
     </View>
   );
 }
-
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
