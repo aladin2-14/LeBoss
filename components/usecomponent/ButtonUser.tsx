@@ -13,7 +13,7 @@ import {
 } from "react-native";
 
 import { MaterialIcons } from "@expo/vector-icons";
-import Ionicons from '@expo/vector-icons/Ionicons';
+import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 // 👉 Active animation Android
 if (
@@ -50,8 +50,9 @@ export default function WalletTabs() {
 
   // 🔹 Ajouter une transaction
   const saveTransaction = async (label: string) => {
+    // console.log("click me on")
     if (!inputValue) return;
-
+    // console.log("click me in")
     const newTransaction: Transaction = {
       id: Date.now().toString(),
       value: inputValue,
@@ -66,9 +67,10 @@ export default function WalletTabs() {
 
     setTransactions(updated);
     await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
+    const storedData = await AsyncStorage.getItem("@transactions");
+    console.log("Donner depense", storedData)
     setInputValue("");
   };
-
   // 🔹 Supprimer une transaction
   const deleteTransaction = async (label: string, id: string) => {
     const updated = {

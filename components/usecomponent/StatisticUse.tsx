@@ -26,6 +26,7 @@ export default function BudgetUtilise() {
         const dep = parsed["Dépense"] || [];
         setDepenses(dep);
       }
+      console.log("donner :",data)
     } catch (e) {
       console.error("Erreur lors du chargement des dépenses :", e);
     }
