@@ -1,33 +1,32 @@
 import Button from "@/components/usecomponent/ButtonUser";
 import Profile from "@/components/usecomponent/Profile";
 import Static from "@/components/usecomponent/StatisticUse";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
+
 export default function Info() {
-  const [screenSize, setScreenSize] = useState({
-    width: Dimensions.get("window").width,
-    height: Dimensions.get("window").height,
-  });
+  const [transactions, setTransactions] = useState<{
+    [key: string]: { id: string; value: string }[];
+  }>({});
 
+  // 🔄 Charger au démarrage
   useEffect(() => {
-    const subscription = Dimensions.addEventListener("change", ({ window }) => {
-      setScreenSize({
-        width: window.width,
-        height: window.height,
-      });
-    });
-
-    return () => subscription?.remove();
+    loadTransactions();
   }, []);
 
-  const containerHeight = screenSize.height / 3;
-  const containerWidth = screenSize.width;
+  const loadTransactions = async () => {
+    const data = await AsyncStorage.getItem("@transactions");
+    if (data) setTransactions(JSON.parse(data));
+  };
 
   return (
     <View style={styles.root}>
       <Profile />
-      <Button />
-      < Static/>
+
+      <Button transactions={transactions} setTransactions={setTransactions} />
+
+      <Static transactions={transactions} />
     </View>
   );
 }

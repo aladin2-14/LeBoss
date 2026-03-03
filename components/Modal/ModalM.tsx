@@ -144,7 +144,7 @@ export default function ModalM({
           )}
 
           <Pressable style={styles.btn} onPress={handleConfirm}>
-            <Text style={styles.btnText}>Valider</Text>
+            <Text style={styles.btnText}>Entrer</Text>
           </Pressable>
         </Pressable>
       </Pressable>

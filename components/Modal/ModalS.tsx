@@ -97,7 +97,7 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
           />
 
           <Pressable style={styles.btn} onPress={handleConfirm}>
-            <Text style={styles.btnText}>Valider</Text>
+            <Text style={styles.btnText}>Enléver</Text>
           </Pressable>
         </Pressable>
       </Pressable>

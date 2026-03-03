@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   FlatList,
   LayoutAnimation,
@@ -15,7 +15,7 @@ import {
 import { MaterialIcons } from "@expo/vector-icons";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-// 👉 Active animation Android
+
 if (
   Platform.OS === "android" &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -25,13 +25,17 @@ if (
 
 type Transaction = { id: string; value: string };
 
-export default function WalletTabs() {
+type Props = {
+  transactions: { [key: string]: Transaction[] };
+  setTransactions: React.Dispatch<
+    React.SetStateAction<{ [key: string]: Transaction[] }>
+  >;
+};
+
+export default function WalletTabs({ transactions, setTransactions }: Props) {
   const [activeTab, setActiveTab] = useState<"history" | "wallet">("history");
   const [openAction, setOpenAction] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
-  const [transactions, setTransactions] = useState<{
-    [key: string]: Transaction[];
-  }>({});
 
   const actions = [
     { label: "Budget", color: "#101C36", showInWallet: false },
@@ -39,20 +43,14 @@ export default function WalletTabs() {
     { label: "Crédit ou Dette", color: "#1E193A", showInWallet: true },
   ];
 
-  useEffect(() => {
-    loadTransactions();
-  }, []);
-
   const toggleAction = (index: number) => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setOpenAction(openAction === index ? null : index);
   };
 
-  // 🔹 Ajouter une transaction
   const saveTransaction = async (label: string) => {
-    // console.log("click me on")
     if (!inputValue) return;
-    // console.log("click me in")
+
     const newTransaction: Transaction = {
       id: Date.now().toString(),
       value: inputValue,
@@ -67,28 +65,22 @@ export default function WalletTabs() {
 
     setTransactions(updated);
     await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
-    const storedData = await AsyncStorage.getItem("@transactions");
-    console.log("Donner depense", storedData)
+
     setInputValue("");
   };
-  // 🔹 Supprimer une transaction
+
   const deleteTransaction = async (label: string, id: string) => {
     const updated = {
       ...transactions,
       [label]: transactions[label].filter((t) => t.id !== id),
     };
+
     setTransactions(updated);
     await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
   };
 
-  const loadTransactions = async () => {
-    const data = await AsyncStorage.getItem("@transactions");
-    if (data) setTransactions(JSON.parse(data));
-  };
-
   return (
     <View style={styles.container}>
-      {/* ================= TABS ================= */}
       <View style={styles.tabs}>
         <TouchableOpacity
           style={[styles.tab, activeTab === "history" && styles.tabActive]}
@@ -119,7 +111,6 @@ export default function WalletTabs() {
         </TouchableOpacity>
       </View>
 
-      {/* ================= ACTIONS (ACCORDION) ================= */}
       {actions
         .filter((item) => activeTab === "history" || item.showInWallet)
         .map((item, index) => {
@@ -137,7 +128,6 @@ export default function WalletTabs() {
               >
                 <Text style={styles.actionText}>{item.label}</Text>
 
-                {/* Icône dynamique selon l'état */}
                 <MaterialIcons
                   name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                   size={24}
@@ -147,7 +137,6 @@ export default function WalletTabs() {
 
               {isOpen && (
                 <View style={styles.actionContent}>
-                  {/* 💰 Input + bouton Ajouter */}
                   {activeTab === "wallet" && item.showInWallet && (
                     <View>
                       <View style={styles.inputRow}>
@@ -162,12 +151,10 @@ export default function WalletTabs() {
                           style={styles.addButton}
                           onPress={() => saveTransaction(item.label)}
                         >
-                          {/* <Text style={styles.addButtonText}>Ajouter</Text> */}
                           <Ionicons name="add" size={20} color="black" />
                         </TouchableOpacity>
                       </View>
 
-                      {/* Liste spécifique de l'action */}
                       {trans.length > 0 && (
                         <FlatList
                           data={trans}
@@ -184,7 +171,6 @@ export default function WalletTabs() {
                                   deleteTransaction(item.label, t.id)
                                 }
                               >
-                                {/* <Text style={styles.deleteButtonText}>✖</Text> */}
                                 <MaterialCommunityIcons
                                   name="delete-empty"
                                   size={24}
@@ -206,7 +192,7 @@ export default function WalletTabs() {
   );
 }
 
-// ================= STYLES =================
+/* 🔹 Styles inchangés */
 const styles = StyleSheet.create({
   container: {
     borderWidth: 2,
@@ -218,66 +204,52 @@ const styles = StyleSheet.create({
     marginTop: 20,
     borderRadius: 20,
   },
-
-  // Tabs
   tabs: {
     flexDirection: "row",
     backgroundColor: "#0C0C1D",
     borderRadius: 16,
     padding: 4,
   },
-
   tab: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: "center",
   },
-
   tabActive: {
     backgroundColor: "#FFD700",
-    color: "#0C0C1D",
   },
-
   tabText: {
     color: "#9CA3AF",
     fontWeight: "600",
   },
-
   tabActiveText: {
     color: "#0C0C1D",
     fontWeight: "700",
   },
-
-  // Actions
   actionBox: {
     marginTop: 14,
     borderRadius: 14,
     overflow: "hidden",
   },
-
   actionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 16,
   },
-
   actionText: {
     color: "#FFFFFF",
     fontWeight: "600",
   },
-
   actionContent: {
     padding: 16,
     backgroundColor: "#111827",
   },
-
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
   },
-
   input: {
     flex: 1,
     padding: 10,
@@ -286,19 +258,12 @@ const styles = StyleSheet.create({
     backgroundColor: "#1F2937",
     marginRight: 10,
   },
-
   addButton: {
     paddingVertical: 8,
     paddingHorizontal: 14,
     backgroundColor: "#FFD700",
     borderRadius: 12,
   },
-
-  addButtonText: {
-    fontWeight: "700",
-    color: "#0C0C1D",
-  },
-
   transactionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -308,24 +273,16 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 10,
   },
-
   transactionText: {
     color: "#fff",
     flex: 1,
   },
-
   deleteButton: {
     marginLeft: 10,
-    // backgroundColor: "#FF4D4F",
     borderColor: "#FFD700",
     borderWidth: 1,
     paddingHorizontal: 6,
     paddingVertical: 4,
     borderRadius: 8,
-  },
-
-  deleteButtonText: {
-    color: "#fff",
-    fontWeight: "700",
   },
 });

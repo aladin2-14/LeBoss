@@ -232,7 +232,7 @@ export const recupererArgent = async (
   investissementPct: number,
   epargnePct: number
 ) => {
-  // 🔹 Filtrer les données de l'utilisateur connecté
+  // 🔹 Filtrer les données de l'utilisateur connecté 
   const userData = financialData.filter((f) => f.userId === currentUser.id);
 
   const month = userData[monthIndex];
