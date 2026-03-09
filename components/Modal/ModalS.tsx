@@ -7,6 +7,7 @@ import {
   Text,
   TextInput,
   Vibration,
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { sortirArgent } from "../../data";
@@ -23,17 +24,20 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
   const [transactions, setTransactions] = useState<{ [key: string]: any[] }>(
     {}
   );
+  const [selectedDepense, setSelectedDepense] = useState<string | null>(null);
 
-  // 🔹 Charger les transactions depuis AsyncStorage
+  // charger storage
   useEffect(() => {
     const loadTransactions = async () => {
       const data = await AsyncStorage.getItem("@transactions");
+
       if (data) {
         setTransactions(JSON.parse(data));
       }
     };
+
     loadTransactions();
-  }, [visible]); // se recharge à chaque ouverture du modal
+  }, [visible]);
 
   const handleConfirm = async () => {
     const montantNum = parseFloat(montant);
@@ -47,27 +51,38 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
         bottomOffset: 50,
         visibilityTime: 2500,
       });
+
       Vibration.vibrate(300);
       return;
     }
 
-    // Appel à ta fonction sortirArgent
     sortirArgent(monthIndex, montantNum);
 
-    // 🔹 Exemple : mettre à jour @transactions si tu veux
     const updated = {
       ...transactions,
-      Sortie: transactions["Sortie"]
+      Dépense: transactions["Dépense"]
         ? [
-            ...transactions["Sortie"],
-            { id: Date.now().toString(), value: montantNum },
+            ...transactions["Dépense"],
+            {
+              id: Date.now().toString(),
+              value: montantNum,
+              label: selectedDepense,
+            },
           ]
-        : [{ id: Date.now().toString(), value: montantNum }],
+        : [
+            {
+              id: Date.now().toString(),
+              value: montantNum,
+              label: selectedDepense,
+            },
+          ],
     };
+
     setTransactions(updated);
     await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
 
     Vibration.vibrate(100);
+
     Toast.show({
       type: "success",
       text1: "Montant retiré",
@@ -80,6 +95,8 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
     setMontant("");
     onClose();
   };
+
+  const depenses = transactions["Dépense"] || [];
 
   return (
     <Modal transparent visible={visible} animationType="fade">
@@ -96,6 +113,22 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
             onChangeText={setMontant}
           />
 
+          {/* affichage direct des dépenses */}
+          <View style={styles.selectBox}>
+            {depenses.map((item) => (
+              <Pressable
+                key={item.id}
+                style={[
+                  styles.option,
+                  selectedDepense === item.value && styles.optionActive,
+                ]}
+                onPress={() => setSelectedDepense(item.value)}
+              >
+                <Text style={styles.optionText}>{item.value}</Text>
+              </Pressable>
+            ))}
+          </View>
+
           <Pressable style={styles.btn} onPress={handleConfirm}>
             <Text style={styles.btnText}>Enléver</Text>
           </Pressable>
@@ -104,6 +137,7 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
     </Modal>
   );
 }
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -134,6 +168,26 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#FFF",
     marginBottom: 10,
+  },
+
+  selectBox: {
+    marginBottom: 10,
+  },
+
+  option: {
+    backgroundColor: "#2A2A2A",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 6,
+  },
+
+  optionActive: {
+    borderWidth: 1,
+    borderColor: "#FFD700",
+  },
+
+  optionText: {
+    color: "#FFF",
   },
 
   btn: {

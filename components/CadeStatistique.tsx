@@ -8,7 +8,7 @@ import { Animated, StyleSheet, Text, View } from "react-native";
 
 type Props = {
   monthIndex: number;
-  refreshTrigger?: number; // 🔹 déclenche refresh externe
+  refreshTrigger?: number;
 };
 
 export default function CadeStatistique({ monthIndex, refreshTrigger }: Props) {
@@ -39,12 +39,6 @@ export default function CadeStatistique({ monthIndex, refreshTrigger }: Props) {
   const investissement = moisData.investissement;
   const epargne = moisData.epargne;
 
-  const safe = revenu === 0 ? 1 : revenu;
-
-  const depensePercent = +((depense / safe) * 100).toFixed(1);
-  const investissementPercent = +((investissement / safe) * 100).toFixed(1);
-  const epargnePercent = +((epargne / safe) * 100).toFixed(1);
-
   const categories = [
     { label: "Dépense /Jour", value: depense, color: "#FF5722" },
     { label: "Investissement /Mois", value: investissement, color: "#FFC107" },
@@ -52,22 +46,7 @@ export default function CadeStatistique({ monthIndex, refreshTrigger }: Props) {
   ];
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          opacity: anim,
-          transform: [
-            {
-              translateY: anim.interpolate({
-                inputRange: [0, 1],
-                outputRange: [10, 0],
-              }),
-            },
-          ],
-        },
-      ]}
-    >
+    <Animated.View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.mois}>{moisData.month}</Text>
         <Text style={styles.total}>{moisData.credit} FBu</Text>
@@ -77,11 +56,7 @@ export default function CadeStatistique({ monthIndex, refreshTrigger }: Props) {
         <View key={index} style={styles.row}>
           <View style={[styles.dot, { backgroundColor: item.color }]} />
           <Text style={styles.label}>{item.label}</Text>
-          <Text
-            style={styles.value}
-          >
-            {item.value} Fbu
-          </Text>
+          <Text style={styles.value}>{item.value} Fbu</Text>
         </View>
       ))}
     </Animated.View>
@@ -106,5 +81,5 @@ const styles = StyleSheet.create({
   row: { flexDirection: "row", alignItems: "center", marginVertical: 4 },
   dot: { width: 14, height: 14, borderRadius: 4, marginRight: 8 },
   label: { flex: 1, color: "#D1D1D1", fontSize: 14 },
-  value: { fontSize: 14, fontWeight: "600", color:"#fff" },
+  value: { fontSize: 14, fontWeight: "600", color: "#fff" },
 });
