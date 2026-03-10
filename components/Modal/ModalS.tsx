@@ -26,17 +26,20 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
   );
   const [selectedDepense, setSelectedDepense] = useState<string | null>(null);
 
-  // charger storage
+  // Charger les dépenses existantes depuis @transactions
   useEffect(() => {
     const loadTransactions = async () => {
       const data = await AsyncStorage.getItem("@transactions");
-
       if (data) {
         setTransactions(JSON.parse(data));
       }
+      setMontant("");
+      setSelectedDepense(null);
     };
 
-    loadTransactions();
+    if (visible) {
+      loadTransactions();
+    }
   }, [visible]);
 
   const handleConfirm = async () => {
@@ -51,22 +54,24 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
         bottomOffset: 50,
         visibilityTime: 2500,
       });
-
       Vibration.vibrate(300);
       return;
     }
 
-    sortirArgent(monthIndex, montantNum);
+    // Enregistrer uniquement dans @depensedata
+    const depenseDataRaw = await AsyncStorage.getItem("@depensedata");
+    const depenseData = depenseDataRaw ? JSON.parse(depenseDataRaw) : {};
 
-    const updated = {
-      ...transactions,
-      Dépense: transactions["Dépense"]
+    const updatedDepense = {
+      ...depenseData,
+      [monthIndex]: depenseData[monthIndex]
         ? [
-            ...transactions["Dépense"],
+            ...depenseData[monthIndex],
             {
               id: Date.now().toString(),
               value: montantNum,
               label: selectedDepense,
+              moi : "un"
             },
           ]
         : [
@@ -74,12 +79,16 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
               id: Date.now().toString(),
               value: montantNum,
               label: selectedDepense,
+              moi : "deux"
             },
           ],
     };
 
-    setTransactions(updated);
-    await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
+    await AsyncStorage.setItem("@depensedata", JSON.stringify(updatedDepense));
+    console.log("📦 @depensedata:", JSON.stringify(updatedDepense, null, 2));
+
+    // Déclencher la logique de retrait
+    sortirArgent(monthIndex, montantNum);
 
     Vibration.vibrate(100);
 
@@ -93,9 +102,11 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
     });
 
     setMontant("");
+    setSelectedDepense(null);
     onClose();
   };
 
+  // Affichage des dépenses existantes depuis @transactions
   const depenses = transactions["Dépense"] || [];
 
   return (
