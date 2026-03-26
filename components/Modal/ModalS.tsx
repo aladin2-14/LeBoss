@@ -1,4 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
@@ -10,41 +9,33 @@ import {
   View,
 } from "react-native";
 import Toast from "react-native-toast-message";
-import { sortirArgent } from "../../data";
 
 interface Props {
   visible: boolean;
   monthIndex: number;
   solde: number;
   onClose: () => void;
+  onConfirm: (
+    montant: number,
+    source: "depense" | "investissement" | "epargne"
+  ) => void;
 }
 
-export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
+export default function ModalS({ visible, solde, onClose, onConfirm }: Props) {
   const [montant, setMontant] = useState("");
-  const [transactions, setTransactions] = useState<{ [key: string]: any[] }>(
-    {}
-  );
-  const [selectedDepense, setSelectedDepense] = useState<string | null>(null);
+  const [selectedSource, setSelectedSource] = useState<
+    "depense" | "investissement" | "epargne"
+  >("depense");
 
-  // Charger les dépenses existantes depuis @transactions
   useEffect(() => {
-    const loadTransactions = async () => {
-      const data = await AsyncStorage.getItem("@transactions");
-      if (data) {
-        setTransactions(JSON.parse(data));
-      }
-      setMontant("");
-      setSelectedDepense(null);
-    };
-
     if (visible) {
-      loadTransactions();
+      setMontant("");
+      setSelectedSource("depense");
     }
   }, [visible]);
 
-  const handleConfirm = async () => {
+  const handleConfirm = () => {
     const montantNum = parseFloat(montant);
-
     if (isNaN(montantNum) || montantNum <= 0 || montantNum > solde) {
       Toast.show({
         type: "error",
@@ -58,56 +49,8 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
       return;
     }
 
-    // Enregistrer uniquement dans @depensedata
-    const depenseDataRaw = await AsyncStorage.getItem("@depensedata");
-    const depenseData = depenseDataRaw ? JSON.parse(depenseDataRaw) : {};
-
-    const updatedDepense = {
-      ...depenseData,
-      [monthIndex]: depenseData[monthIndex]
-        ? [
-            ...depenseData[monthIndex],
-            {
-              id: Date.now().toString(),
-              value: montantNum,
-              label: selectedDepense,
-              moi : "un"
-            },
-          ]
-        : [
-            {
-              id: Date.now().toString(),
-              value: montantNum,
-              label: selectedDepense,
-              moi : "deux"
-            },
-          ],
-    };
-
-    await AsyncStorage.setItem("@depensedata", JSON.stringify(updatedDepense));
-    console.log("📦 @depensedata:", JSON.stringify(updatedDepense, null, 2));
-
-    // Déclencher la logique de retrait
-    sortirArgent(monthIndex, montantNum);
-
-    Vibration.vibrate(100);
-
-    Toast.show({
-      type: "success",
-      text1: "Montant retiré",
-      text2: `${montantNum.toLocaleString()} FBu`,
-      position: "bottom",
-      bottomOffset: 50,
-      visibilityTime: 2500,
-    });
-
-    setMontant("");
-    setSelectedDepense(null);
-    onClose();
+    onConfirm(montantNum, selectedSource);
   };
-
-  // Affichage des dépenses existantes depuis @transactions
-  const depenses = transactions["Dépense"] || [];
 
   return (
     <Modal transparent visible={visible} animationType="fade">
@@ -124,18 +67,17 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
             onChangeText={setMontant}
           />
 
-          {/* affichage direct des dépenses */}
           <View style={styles.selectBox}>
-            {depenses.map((item) => (
+            {["depense", "investissement", "epargne"].map((item) => (
               <Pressable
-                key={item.id}
+                key={item}
                 style={[
                   styles.option,
-                  selectedDepense === item.value && styles.optionActive,
+                  selectedSource === item && styles.optionActive,
                 ]}
-                onPress={() => setSelectedDepense(item.value)}
+                onPress={() => setSelectedSource(item as any)}
               >
-                <Text style={styles.optionText}>{item.value}</Text>
+                <Text style={styles.optionText}>{item}</Text>
               </Pressable>
             ))}
           </View>
@@ -149,6 +91,7 @@ export default function ModalS({ visible, monthIndex, solde, onClose }: Props) {
   );
 }
 
+// Styles inchangés
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
@@ -156,14 +99,12 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-
   container: {
     width: "90%",
     backgroundColor: "#1E1E1E",
     borderRadius: 22,
     padding: 20,
   },
-
   title: {
     fontSize: 20,
     fontWeight: "700",
@@ -171,7 +112,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     textAlign: "center",
   },
-
   input: {
     backgroundColor: "#2A2A2A",
     borderRadius: 12,
@@ -180,34 +120,21 @@ const styles = StyleSheet.create({
     color: "#FFF",
     marginBottom: 10,
   },
-
-  selectBox: {
-    marginBottom: 10,
-  },
-
+  selectBox: { marginBottom: 10 },
   option: {
     backgroundColor: "#2A2A2A",
     padding: 12,
     borderRadius: 10,
     marginBottom: 6,
   },
-
-  optionActive: {
-    borderWidth: 1,
-    borderColor: "#FFD700",
-  },
-
-  optionText: {
-    color: "#FFF",
-  },
-
+  optionActive: { borderWidth: 1, borderColor: "#FFD700" },
+  optionText: { color: "#FFF" },
   btn: {
     backgroundColor: "#FFD700",
     padding: 14,
     borderRadius: 14,
     marginTop: 10,
   },
-
   btnText: {
     color: "#0C0C1D",
     textAlign: "center",

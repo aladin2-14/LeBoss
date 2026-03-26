@@ -40,7 +40,8 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
   const actions = [
     { label: "Budget", color: "#101C36", showInWallet: false },
     { label: "Dépense", color: "#462620", showInWallet: true },
-    { label: "Crédit et épargne", color: "#1E193A", showInWallet: true },
+    { label: "Epargne", color: "#1E193A", showInWallet: true },
+    { label: "Investisssement", color: "#1E19", showInWallet: true },
   ];
 
   const toggleAction = (index: number) => {
