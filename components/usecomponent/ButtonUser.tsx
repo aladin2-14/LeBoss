@@ -175,7 +175,7 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
                                 <MaterialCommunityIcons
                                   name="delete-empty"
                                   size={24}
-                                  color="#FFD700"
+                                  color="#EA0000"
                                 />
                               </TouchableOpacity>
                             </View>
@@ -280,7 +280,7 @@ const styles = StyleSheet.create({
   },
   deleteButton: {
     marginLeft: 10,
-    borderColor: "#FFD700",
+    borderColor: "#EA0000",
     borderWidth: 1,
     paddingHorizontal: 6,
     paddingVertical: 4,

@@ -20,6 +20,7 @@ export default function AjoutObjectif({ monthIndex }: { monthIndex: number }) {
     if (!title || !description) return;
 
     const newGoal: MonthlyGoal = {
+      idhistorique: Date.now().toString(),
       userId: currentUser.id,
       month: MONTHS[monthIndex],
       title,

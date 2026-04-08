@@ -23,11 +23,12 @@ export type FinancialMonth = {
 };
 
 export type MonthlyGoal = {
+  idhistorique: string;
   userId: string;
   month: string;
   title: string;
   description: string;
-  status: "in-progress" | "achieved" | "failed";
+  status: "in-progress" | "achieved" | "failed" | "deleted";
 };
 
 export type Depense = {
@@ -238,40 +239,32 @@ export const recupererArgent = async (
 
   await saveFinancialData();
 };
-// 💸 Sortir argent
-export const sortirArgent = async (monthIndex: number, montant: number) => {
+export const sortirArgent = async (
+  monthIndex: number,
+  montant: number,
+  source: "depense" | "investissement" | "epargne",
+  categorie: string,
+  description?: string
+) => {
   const userData = financialData.filter((f) => f.userId === currentUser.id);
-
   const month = userData[monthIndex];
   if (!month) return;
 
-  if (montant > month.revenu) {
-    console.warn("Fonds insuffisants !");
-    return;
+  let budget = month[source];
+
+  if (montant > budget) {
+    console.warn("Fonds insuffisants dans la catégorie choisie !");
+
+    return {
+      success: false,
+      reason: "INSUFFICIENT",
+      manque: montant - budget, // 🔥 important
+    };
   }
 
-  const creditAvant = month.credit;
+  month[source] -= montant;
 
-  month.revenu -= montant;
-
-  const total = month.depense + month.investissement + month.epargne;
-
-  if (total > 0) {
-    const ratio = month.revenu / (month.revenu + montant);
-
-    month.depense = Math.round(month.depense * ratio);
-    month.investissement = Math.round(month.investissement * ratio);
-    month.epargne = Math.round(month.epargne * ratio);
-  }
-
-  month.credit =
-    month.revenu - (month.depense + month.investissement + month.epargne);
-
-  const creditApres = month.credit;
-
-  console.log("credit avant :", creditAvant);
-  console.log("credit apres :", creditApres);
-
+  console.log(`💸 Retrait de ${montant} FBu depuis ${source} -> ${categorie}`);
   await saveFinancialData();
 };
 
