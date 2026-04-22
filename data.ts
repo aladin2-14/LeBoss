@@ -265,7 +265,40 @@ export const sortirArgent = async (
   month[source] -= montant;
 
   console.log(`💸 Retrait de ${montant} FBu depuis ${source} -> ${categorie}`);
+  try {
+    const key = "@transactions_history";
+
+    const existing = await AsyncStorage.getItem(key);
+    const parsed = existing ? JSON.parse(existing) : [];
+
+    const newTransaction = {
+      id: Date.now().toString(),
+      montant,
+      source,
+      categorie,
+      description,
+      date: new Date().toISOString(),
+    };
+
+    const updated = [newTransaction, ...parsed];
+
+    await AsyncStorage.setItem(key, JSON.stringify(updated));
+  } catch (error) {
+    console.error("Erreur sauvegarde transaction:", error);
+  }
+
+  /* 💾 Sauvegarde état */
   await saveFinancialData();
+
+  return {
+    success: true,
+    data: {
+      montant,
+      source,
+      categorie,
+      description,
+    },
+  };
 };
 
 // ===============================

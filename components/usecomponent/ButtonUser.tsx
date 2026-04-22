@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   FlatList,
   LayoutAnimation,
@@ -37,11 +37,14 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
   const [openAction, setOpenAction] = useState<number | null>(null);
   const [inputValue, setInputValue] = useState("");
 
+  // 🔥 historique réel
+  const [history, setHistory] = useState<any[]>([]);
+
   const actions = [
     { label: "Budget", color: "#101C36", showInWallet: false },
     { label: "Dépense", color: "#462620", showInWallet: true },
     { label: "Epargne", color: "#1E193A", showInWallet: true },
-    { label: "Investisssement", color: "#1E19", showInWallet: true },
+    { label: "Investissement", color: "#00400C", showInWallet: true },
   ];
 
   const toggleAction = (index: number) => {
@@ -80,6 +83,66 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
     await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
   };
 
+  // const handleSortie = async () => {
+  //   const result = await sortirArgent(0, 5000, "depense", "nourriture");
+  //   console.log(result);
+  // };
+
+  /* =========================
+     🔥 MAPPING HISTORIQUE
+  ========================= */
+  const mapHistoryToTransactions = (history: any[]) => {
+    const result: { [key: string]: Transaction[] } = {};
+
+    history.forEach((item) => {
+      let label = "";
+
+      if (item.source === "depense") label = "Dépense";
+      else if (item.source === "epargne") label = "Epargne";
+      else if (item.source === "investissement")
+        label = "Investissement";
+
+      if (!label) return;
+
+      const newItem: Transaction = {
+        id: item.id,
+        value: `${item.montant} FBu - ${item.categorie}`,
+      };
+
+      if (!result[label]) {
+        result[label] = [newItem];
+      } else {
+        result[label].push(newItem);
+      }
+    });
+
+    return result;
+  };
+
+  /* =========================
+     🔥 LOAD HISTORIQUE
+  ========================= */
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const data = await AsyncStorage.getItem("@transactions_history");
+        const parsed = data ? JSON.parse(data) : [];
+
+        console.log("🔥 HISTORIQUE:", parsed);
+
+        setHistory(parsed);
+
+        // 🔥 transformation vers UI
+        const mapped = mapHistoryToTransactions(parsed);
+        setTransactions(mapped);
+      } catch (error) {
+        console.error("Erreur lecture historique:", error);
+      }
+    };
+
+    loadHistory();
+  }, []);
+
   return (
     <View style={styles.container}>
       <View style={styles.tabs}>
@@ -96,7 +159,6 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
             Historique
           </Text>
         </TouchableOpacity>
-
         <TouchableOpacity
           style={[styles.tab, activeTab === "wallet" && styles.tabActive]}
           onPress={() => setActiveTab("wallet")}
@@ -192,7 +254,6 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
     </View>
   );
 }
-
 /* 🔹 Styles inchangés */
 const styles = StyleSheet.create({
   container: {

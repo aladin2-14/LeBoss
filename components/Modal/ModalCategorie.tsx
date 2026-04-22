@@ -37,11 +37,17 @@ export default function ModalCategorie({
     const loadOptions = async () => {
       try {
         const dataRaw = await AsyncStorage.getItem("@transactions");
-        if (!dataRaw) return;
+
+        if (!dataRaw) {
+          console.log("❌ Aucune donnée trouvée dans @transactions");
+          return;
+        }
 
         const all = JSON.parse(dataRaw);
 
-        // Normaliser le nom de la source pour correspondre aux clés dans storage
+        console.log("📦 DONNÉES BRUTES STORAGE:", all);
+        console.log("📌 SOURCE ACTUELLE:", source);
+
         const keyMap: Record<string, string> = {
           depense: "Dépense",
           investissement: "Investissement",
@@ -49,7 +55,19 @@ export default function ModalCategorie({
         };
 
         const key = keyMap[source.toLowerCase()];
-        setOptions(all[key] || []);
+
+        console.log("🔑 CLÉ UTILISÉE:", key);
+
+        const dataForKey = all[key];
+
+        // 🔥 LOG SPÉCIAL INVESTISSEMENT
+        if (source === "investissement") {
+          console.log("📈 SOUS-CAT INVESTISSEMENT:", dataForKey);
+        }
+
+        console.log("📊 OPTIONS CHARGÉES:", dataForKey);
+
+        setOptions(dataForKey || []);
       } catch (error) {
         console.warn("Erreur lors du chargement des sous-catégories:", error);
         setOptions([]);
@@ -77,7 +95,6 @@ export default function ModalCategorie({
       return;
     }
 
-    // Enregistrer dans @depensedata
     const depenseDataRaw = await AsyncStorage.getItem("@depensedata");
     const depenseData = depenseDataRaw ? JSON.parse(depenseDataRaw) : {};
 
@@ -96,10 +113,12 @@ export default function ModalCategorie({
 
     await AsyncStorage.setItem("@depensedata", JSON.stringify(updatedDepense));
 
-    // Appeler le parent pour retirer le montant
+    console.log("💾 TRANSACTION ENREGISTRÉE:", updatedDepense);
+
     onConfirm(selectedCategorie, description);
 
     Vibration.vibrate(100);
+
     Toast.show({
       type: "success",
       text1: "Montant retiré",
@@ -117,16 +136,18 @@ export default function ModalCategorie({
           <Text style={styles.title}>Choisir catégorie</Text>
 
           <View style={styles.selectBox}>
-            {options.map((item) => (
+            {options.map((item: any, index: number) => (
               <Pressable
-                key={item.id}
+                key={item.id ?? index}
                 style={[
                   styles.option,
                   selectedCategorie === item.value && styles.optionActive,
                 ]}
-                onPress={() => setSelectedCategorie(item.value)}
+                onPress={() => {
+                  console.log("👉 CATÉGORIE SÉLECTIONNÉE:", item.value);
+                  setSelectedCategorie(item.value);
+                }}
               >
-                {/* Affiche la valeur et non l'objet entier */}
                 <Text style={styles.optionText}>{item.value}</Text>
               </Pressable>
             ))}
@@ -149,7 +170,6 @@ export default function ModalCategorie({
   );
 }
 
-// Styles identiques à ModalS
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
