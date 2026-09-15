@@ -281,7 +281,12 @@ export const sortirArgent = async (
 
     const updated = [newTransaction, ...parsed];
 
+    // await AsyncStorage.setItem(key, JSON.stringify(updated));
     await AsyncStorage.setItem(key, JSON.stringify(updated));
+
+    const verification = await AsyncStorage.getItem("@transactions_history");
+
+    console.log("💾 TRANSACTIONS STOCKÉES :", JSON.parse(verification || "[]"));
   } catch (error) {
     console.error("Erreur sauvegarde transaction:", error);
   }
