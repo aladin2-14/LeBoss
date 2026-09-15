@@ -229,7 +229,7 @@ export default function WalletTabs({ transactions, setTransactions }: Props) {
                                 {t.value}
                               </Text>
                               <TouchableOpacity
-                                style={styles.deleteButton}
+                                style={styles.deleteButton} 
                                 onPress={() =>
                                   deleteTransaction(item.label, t.id)
                                 }

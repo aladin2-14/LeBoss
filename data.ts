@@ -215,7 +215,6 @@ export const recupererArgent = async (
 
   // 1. Ajouter revenu
   month.revenu += montant;
-
   // 2. Calcul des montants via %
   const depenseAmount = Math.round((montant * depensePct) / 100);
   const investissementAmount = Math.round((montant * investissementPct) / 100);
