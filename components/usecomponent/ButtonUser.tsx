@@ -1,6 +1,8 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
+  AppState,
+  AppStateStatus,
   FlatList,
   LayoutAnimation,
   Platform,
@@ -57,38 +59,34 @@ type Props = {
    WALLET TABS
 ========================================================= */
 
-export default function WalletTabs({
-  transactions,
-  setTransactions,
-}: Props) {
+export default function WalletTabs({ transactions, setTransactions }: Props) {
   /* =======================================================
      ÉTATS
   ======================================================= */
 
-  const [activeTab, setActiveTab] = useState<
-    "history" | "wallet"
-  >("history");
+  const [activeTab, setActiveTab] = useState<"history" | "wallet">("history");
 
-  const [openAction, setOpenAction] = useState<number | null>(
-    null
-  );
+  const [openAction, setOpenAction] = useState<number | null>(null);
 
   const [inputValue, setInputValue] = useState("");
 
   /*
-    🔥 Historique réel
+    🔥 HISTORIQUE RÉEL
 
-    Cette donnée vient UNIQUEMENT de :
+    IMPORTANT :
+
+    L'historique réel vient UNIQUEMENT de :
 
     @transactions_history
+
+    buttonUser.tsx ne crée aucune transaction historique.
+    Il ne fait que lire et afficher.
   */
-  const [history, setHistory] = useState<
-    HistoryTransaction[]
-  >([]);
+  const [history, setHistory] = useState<HistoryTransaction[]>([]);
 
   /* =======================================================
-     CATÉGORIES
-  ======================================================= */
+   CATÉGORIES / ACTIONS
+========================================================= */
 
   const actions = [
     {
@@ -111,24 +109,146 @@ export default function WalletTabs({
   ];
 
   /* =======================================================
-     OUVRIR / FERMER UNE CATÉGORIE
-  ======================================================= */
+   CHARGER L'HISTORIQUE RÉEL
+========================================================= */
+
+  const loadHistory = useCallback(async () => {
+    try {
+      /*
+        🔥 SOURCE UNIQUE DE L'HISTORIQUE
+
+        On ne lit PAS :
+
+        @transactions
+
+        On lit uniquement :
+
+        @transactions_history
+      */
+
+      const data = await AsyncStorage.getItem("@transactions_history");
+
+      const parsed: HistoryTransaction[] = data ? JSON.parse(data) : [];
+
+      /*
+        Vérification de sécurité :
+
+        On s'assure que ce que nous recevons est bien
+        un tableau.
+      */
+
+      if (!Array.isArray(parsed)) {
+        console.warn("⚠️ @transactions_history ne contient pas un tableau");
+
+        setHistory([]);
+        return;
+      }
+
+      /*
+        🔥 Les transactions sont déjà enregistrées
+        par data.ts dans l'ordre :
+
+        nouvelle transaction
+        ↓
+        anciennes transactions
+
+        On conserve donc directement cet ordre.
+      */
+
+      setHistory(parsed);
+
+      console.log("🔥 HISTORIQUE RECHARGÉ :", parsed);
+    } catch (error) {
+      console.error("❌ Erreur lecture @transactions_history:", error);
+
+      setHistory([]);
+    }
+  }, []);
+
+  /* =======================================================
+   CHARGEMENT INITIAL
+========================================================= */
+
+  useEffect(() => {
+    loadHistory();
+  }, [loadHistory]);
+
+  /* =======================================================
+   RAFRAÎCHISSEMENT LORSQUE L'APPLICATION REVIENT
+========================================================= */
+
+  useEffect(() => {
+    const handleAppStateChange = (nextAppState: AppStateStatus) => {
+      /*
+        Lorsque l'application revient au premier plan,
+        on relit @transactions_history.
+
+        Cela évite d'avoir :
+
+        AsyncStorage = 6 transactions
+        history      = 5 transactions
+      */
+
+      if (nextAppState === "active") {
+        loadHistory();
+      }
+    };
+
+    const subscription = AppState.addEventListener(
+      "change",
+      handleAppStateChange
+    );
+
+    return () => {
+      subscription.remove();
+    };
+  }, [loadHistory]);
+
+  /* =======================================================
+   RAFRAÎCHISSEMENT LORSQU'ON OUVRE L'ONGLET HISTORIQUE
+========================================================= */
+
+  useEffect(() => {
+    if (activeTab === "history") {
+      loadHistory();
+    }
+  }, [activeTab, loadHistory]);
+
+  /* =======================================================
+   OUVRIR / FERMER UNE CATÉGORIE
+========================================================= */
 
   const toggleAction = (index: number) => {
-    LayoutAnimation.configureNext(
-      LayoutAnimation.Presets.easeInEaseOut
-    );
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
 
-    setOpenAction(
-      openAction === index ? null : index
-    );
+    /*
+      🔥 Quand on ouvre une catégorie dans l'historique,
+      on recharge les données.
+
+      Cela permet d'avoir les dernières transactions
+      présentes dans @transactions_history.
+    */
+
+    if (activeTab === "history") {
+      loadHistory();
+    }
+
+    setOpenAction(openAction === index ? null : index);
   };
 
   /* =======================================================
-     PORTE-MONNAIE
-     
-     Ces fonctions utilisent @transactions
-  ======================================================= */
+   PORTE-MONNAIE
+
+   IMPORTANT :
+
+   Ces fonctions utilisent UNIQUEMENT :
+
+   @transactions
+
+   Elles ne touchent PAS :
+
+   @transactions_history
+========================================================= */
 
   const saveTransaction = async (label: string) => {
     if (!inputValue) return;
@@ -148,37 +268,26 @@ export default function WalletTabs({
 
     setTransactions(updated);
 
-    await AsyncStorage.setItem(
-      "@transactions",
-      JSON.stringify(updated)
-    );
+    await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
 
     setInputValue("");
   };
 
-  const deleteTransaction = async (
-    label: string,
-    id: string
-  ) => {
+  const deleteTransaction = async (label: string, id: string) => {
     const updated = {
       ...transactions,
 
-      [label]: transactions[label].filter(
-        (t) => t.id !== id
-      ),
+      [label]: transactions[label].filter((t) => t.id !== id),
     };
 
     setTransactions(updated);
 
-    await AsyncStorage.setItem(
-      "@transactions",
-      JSON.stringify(updated)
-    );
+    await AsyncStorage.setItem("@transactions", JSON.stringify(updated));
   };
 
   /* =======================================================
-     FORMAT DATE
-  ======================================================= */
+   FORMAT DATE
+========================================================= */
 
   const formatDate = (date: string) => {
     try {
@@ -197,47 +306,8 @@ export default function WalletTabs({
   };
 
   /* =======================================================
-     CHARGER @transactions_history
-  ======================================================= */
-
-  useEffect(() => {
-    const loadHistory = async () => {
-      try {
-        /*
-          🔥 IMPORTANT :
-
-          L'HISTORIQUE utilise uniquement
-          @transactions_history
-        */
-
-        const data = await AsyncStorage.getItem(
-          "@transactions_history"
-        );
-
-        const parsed: HistoryTransaction[] = data
-          ? JSON.parse(data)
-          : [];
-
-        console.log(
-          "🔥 HISTORIQUE @transactions_history:",
-          parsed
-        );
-
-        setHistory(parsed);
-      } catch (error) {
-        console.error(
-          "❌ Erreur lecture @transactions_history:",
-          error
-        );
-      }
-    };
-
-    loadHistory();
-  }, []);
-
-  /* =======================================================
-     CONVERTIR LE LABEL UI EN SOURCE
-  ======================================================= */
+   CONVERTIR LE LABEL UI EN SOURCE
+========================================================= */
 
   const getSourceFromLabel = (
     label: string
@@ -258,12 +328,10 @@ export default function WalletTabs({
   };
 
   /* =======================================================
-     RÉCUPÉRER L'HISTORIQUE D'UNE CATÉGORIE
-  ======================================================= */
+   RÉCUPÉRER L'HISTORIQUE D'UNE CATÉGORIE
+========================================================= */
 
-  const getHistoryForAction = (
-    label: string
-  ): HistoryTransaction[] => {
+  const getHistoryForAction = (label: string): HistoryTransaction[] => {
     const source = getSourceFromLabel(label);
 
     if (!source) {
@@ -271,26 +339,33 @@ export default function WalletTabs({
     }
 
     /*
-      Exemple :
+      IMPORTANT :
 
-      label = "Dépense"
+      On filtre uniquement avec :
 
-      source = "depense"
+      source
 
-      On récupère uniquement les transactions
-      ayant :
+      On ne touche JAMAIS à :
 
-      source: "depense"
+      categorie
+
+      Donc si data.ts a enregistré :
+
+      categorie: "Nourriture"
+
+      nous affichons :
+
+      "Nourriture"
+
+      sans transformation.
     */
 
-    return history.filter(
-      (item) => item.source === source
-    );
+    return history.filter((item) => item.source === source);
   };
 
   /* =======================================================
-     RENDER
-  ======================================================= */
+   RENDER
+========================================================= */
 
   return (
     <View style={styles.container}>
@@ -302,20 +377,21 @@ export default function WalletTabs({
         {/* HISTORIQUE */}
 
         <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === "history" &&
-              styles.tabActive,
-          ]}
-          onPress={() =>
-            setActiveTab("history")
-          }
+          style={[styles.tab, activeTab === "history" && styles.tabActive]}
+          onPress={() => {
+            setActiveTab("history");
+
+            /*
+              🔥 Recharge immédiatement
+              l'historique depuis AsyncStorage.
+            */
+            loadHistory();
+          }}
         >
           <Text
             style={[
               styles.tabText,
-              activeTab === "history" &&
-                styles.tabActiveText,
+              activeTab === "history" && styles.tabActiveText,
             ]}
           >
             Historique
@@ -325,20 +401,13 @@ export default function WalletTabs({
         {/* PORTE-MONNAIE */}
 
         <TouchableOpacity
-          style={[
-            styles.tab,
-            activeTab === "wallet" &&
-              styles.tabActive,
-          ]}
-          onPress={() =>
-            setActiveTab("wallet")
-          }
+          style={[styles.tab, activeTab === "wallet" && styles.tabActive]}
+          onPress={() => setActiveTab("wallet")}
         >
           <Text
             style={[
               styles.tabText,
-              activeTab === "wallet" &&
-                styles.tabActiveText,
+              activeTab === "wallet" && styles.tabActiveText,
             ]}
           >
             Porte-monnaie
@@ -351,36 +420,29 @@ export default function WalletTabs({
       ================================================= */}
 
       {actions
-        .filter(
-          (item) =>
-            activeTab === "history" ||
-            item.showInWallet
-        )
+        .filter((item) => activeTab === "history" || item.showInWallet)
         .map((item, index) => {
-          const isOpen =
-            openAction === index;
+          const isOpen = openAction === index;
 
           /*
             🔥 HISTORIQUE
 
-            Les données viennent de :
+            Les données viennent UNIQUEMENT de :
 
             @transactions_history
           */
 
-          const historyTransactions =
-            getHistoryForAction(item.label);
+          const historyTransactions = getHistoryForAction(item.label);
 
           /*
             💰 PORTE-MONNAIE
 
-            Les données viennent de :
+            Les données viennent UNIQUEMENT de :
 
             @transactions
           */
 
-          const walletTransactions =
-            transactions[item.label] || [];
+          const walletTransactions = transactions[item.label] || [];
 
           return (
             <View
@@ -388,8 +450,7 @@ export default function WalletTabs({
               style={[
                 styles.actionBox,
                 {
-                  backgroundColor:
-                    item.color,
+                  backgroundColor: item.color,
                 },
               ]}
             >
@@ -399,20 +460,12 @@ export default function WalletTabs({
 
               <TouchableOpacity
                 style={styles.actionHeader}
-                onPress={() =>
-                  toggleAction(index)
-                }
+                onPress={() => toggleAction(index)}
               >
-                <Text style={styles.actionText}>
-                  {item.label}
-                </Text>
+                <Text style={styles.actionText}>{item.label}</Text>
 
                 <MaterialIcons
-                  name={
-                    isOpen
-                      ? "keyboard-arrow-up"
-                      : "keyboard-arrow-down"
-                  }
+                  name={isOpen ? "keyboard-arrow-up" : "keyboard-arrow-down"}
                   size={24}
                   color="#FACC15"
                 />
@@ -423,18 +476,14 @@ export default function WalletTabs({
               ========================================= */}
 
               {isOpen && (
-                <View
-                  style={styles.actionContent}
-                >
+                <View style={styles.actionContent}>
                   {/* =====================================
                       🔥 HISTORIQUE
                   ===================================== */}
 
-                  {activeTab ===
-                    "history" && (
+                  {activeTab === "history" && (
                     <View>
-                      {historyTransactions.length >
-                      0 ? (
+                      {historyTransactions.length > 0 ? (
                         /*
                           🔥 UNE SEULE TRANSACTION
                           VISIBLE À LA FOIS.
@@ -444,55 +493,29 @@ export default function WalletTabs({
                         */
 
                         <FlatList
-                          data={
-                            historyTransactions
-                          }
-                          keyExtractor={(item) =>
-                            item.id
-                          }
-                          style={
-                            styles.historyList
-                          }
-                          showsVerticalScrollIndicator={
-                            true
-                          }
-                          nestedScrollEnabled={
-                            true
-                          }
-                          renderItem={({
-                            item: t,
-                          }) => (
-                            <View
-                              style={
-                                styles.transactionRow
-                              }
-                            >
-                              <View
-                                style={
-                                  styles.historyInfo
-                                }
-                              >
+                          data={historyTransactions}
+                          keyExtractor={(item) => item.id}
+                          style={styles.historyList}
+                          showsVerticalScrollIndicator={true}
+                          nestedScrollEnabled={true}
+                          renderItem={({ item: t }) => (
+                            <View style={styles.transactionRow}>
+                              <View style={styles.historyInfo}>
                                 {/* =================
                                     CATÉGORIE
                                 ================= */}
 
-                                <Text
-                                  style={
-                                    styles.historyCategory
-                                  }
-                                >
-                                  {t.categorie.trim()}
+                                <Text style={styles.historyCategory}>
+                                  {t.categorie
+                                    ? t.categorie.trim()
+                                    : "Catégorie inconnue"}
                                 </Text>
 
                                 {/* =================
                                     MONTANT
                                 ================= */}
 
-                                <Text
-                                  style={
-                                    styles.historyAmount
-                                  }
-                                >
+                                <Text style={styles.historyAmount}>
                                   {t.montant} FBu
                                 </Text>
 
@@ -500,14 +523,8 @@ export default function WalletTabs({
                                     DATE
                                 ================= */}
 
-                                <Text
-                                  style={
-                                    styles.historyDate
-                                  }
-                                >
-                                  {formatDate(
-                                    t.date
-                                  )}
+                                <Text style={styles.historyDate}>
+                                  {formatDate(t.date)}
                                 </Text>
 
                                 {/* =================
@@ -515,11 +532,7 @@ export default function WalletTabs({
                                 ================= */}
 
                                 {t.description ? (
-                                  <Text
-                                    style={
-                                      styles.historyDescription
-                                    }
-                                  >
+                                  <Text style={styles.historyDescription}>
                                     {t.description}
                                   </Text>
                                 ) : null}
@@ -528,11 +541,7 @@ export default function WalletTabs({
                           )}
                         />
                       ) : (
-                        <Text
-                          style={
-                            styles.emptyHistory
-                          }
-                        >
+                        <Text style={styles.emptyHistory}>
                           Aucun historique
                         </Text>
                       )}
@@ -543,102 +552,60 @@ export default function WalletTabs({
                       💰 PORTE-MONNAIE
                   ===================================== */}
 
-                  {activeTab ===
-                    "wallet" &&
-                    item.showInWallet && (
-                      <View>
-                        {/* INPUT */}
+                  {activeTab === "wallet" && item.showInWallet && (
+                    <View>
+                      {/* INPUT */}
 
-                        <View
-                          style={
-                            styles.inputRow
-                          }
+                      <View style={styles.inputRow}>
+                        <TextInput
+                          style={styles.input}
+                          placeholder={`Ajouter ${item.label}`}
+                          value={inputValue}
+                          placeholderTextColor="#FFFFFF"
+                          onChangeText={setInputValue}
+                        />
+
+                        <TouchableOpacity
+                          style={styles.addButton}
+                          onPress={() => saveTransaction(item.label)}
                         >
-                          <TextInput
-                            style={
-                              styles.input
-                            }
-                            placeholder={`Ajouter ${item.label}`}
-                            value={
-                              inputValue
-                            }
-                            placeholderTextColor="#FFFFFF"
-                            onChangeText={
-                              setInputValue
-                            }
-                          />
+                          <Ionicons name="add" size={20} color="black" />
+                        </TouchableOpacity>
+                      </View>
 
-                          <TouchableOpacity
-                            style={
-                              styles.addButton
-                            }
-                            onPress={() =>
-                              saveTransaction(
-                                item.label
-                              )
-                            }
-                          >
-                            <Ionicons
-                              name="add"
-                              size={20}
-                              color="black"
-                            />
-                          </TouchableOpacity>
-                        </View>
+                      {/* LISTE PORTE-MONNAIE */}
 
-                        {/* LISTE PORTE-MONNAIE */}
+                      {walletTransactions.length > 0 && (
+                        <FlatList
+                          data={walletTransactions}
+                          keyExtractor={(item) => item.id}
+                          style={{
+                            marginTop: 10,
+                          }}
+                          renderItem={({ item: t }) => (
+                            <View style={styles.transactionRow}>
+                              <Text style={styles.transactionText}>
+                                {t.value}
+                              </Text>
 
-                        {walletTransactions.length >
-                          0 && (
-                          <FlatList
-                            data={
-                              walletTransactions
-                            }
-                            keyExtractor={(
-                              item
-                            ) => item.id}
-                            style={{
-                              marginTop: 10,
-                            }}
-                            renderItem={({
-                              item: t,
-                            }) => (
-                              <View
-                                style={
-                                  styles.transactionRow
+                              <TouchableOpacity
+                                style={styles.deleteButton}
+                                onPress={() =>
+                                  deleteTransaction(item.label, t.id)
                                 }
                               >
-                                <Text
-                                  style={
-                                    styles.transactionText
-                                  }
-                                >
-                                  {t.value}
-                                </Text>
-
-                                <TouchableOpacity
-                                  style={
-                                    styles.deleteButton
-                                  }
-                                  onPress={() =>
-                                    deleteTransaction(
-                                      item.label,
-                                      t.id
-                                    )
-                                  }
-                                >
-                                  <MaterialCommunityIcons
-                                    name="delete-empty"
-                                    size={24}
-                                    color="#EA0000"
-                                  />
-                                </TouchableOpacity>
-                              </View>
-                            )}
-                          />
-                        )}
-                      </View>
-                    )}
+                                <MaterialCommunityIcons
+                                  name="delete-empty"
+                                  size={24}
+                                  color="#EA0000"
+                                />
+                              </TouchableOpacity>
+                            </View>
+                          )}
+                        />
+                      )}
+                    </View>
+                  )}
                 </View>
               )}
             </View>
@@ -765,7 +732,7 @@ const styles = StyleSheet.create({
   ======================================================= */
 
   /*
-    🔥 Hauteur limitée.
+    Hauteur limitée.
 
     Une transaction est visible.
     Pour les autres, on scrolle à l'intérieur.
@@ -812,4 +779,3 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 });
-
